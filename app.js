@@ -1,6 +1,6 @@
 const files=['a','b','c','d','e','f','g','h'];
 let flipped=false,selected=null,turn='w',moves=[],history=[],gameOver=false;
-let rights={wK:true,wQ:true,bK:true,bQ:true},enPassant=null,halfmove=0;
+let rights={wK:true,wQ:true,bK:true,bQ:true},enPassant=null,halfmove=0,positionHistory=[];
 
 const start=[
  ['♜','♞','♝','♛','♚','♝','♞','♜'],['♟','♟','♟','♟','♟','♟','♟','♟'],
@@ -12,8 +12,8 @@ const white=new Set('♔♕♖♗♘♙'),black=new Set('♚♛♜♝♞♟');
 
 function color(p){return white.has(p)?'w':black.has(p)?'b':null}
 function opposite(t){return t==='w'?'b':'w'}
-function cloneState(){return {board:structuredClone(board),turn,rights:{...rights},enPassant,moves:[...moves],halfmove}}
-function restore(s){board=structuredClone(s.board);turn=s.turn;rights={...s.rights};enPassant=s.enPassant;moves=[...s.moves];halfmove=s.halfmove;gameOver=false}
+function positionKey(){const rows=board.map(row=>row.map(p=>p||'.').join('')).join('/');const castle=(rights.wK?'K':'')+(rights.wQ?'Q':'')+(rights.bK?'k':'')+(rights.bQ?'q':'')||'-';const ep=enPassant?squareName(enPassant[0],enPassant[1]):'-';return rows+' '+turn+' '+castle+' '+ep}\nfunction cloneState(){return {board:structuredClone(board),turn,rights:{...rights},enPassant,moves:[...moves],halfmove,positionHistory:[...positionHistory]}}
+function restore(s){board=structuredClone(s.board);turn=s.turn;rights={...s.rights};enPassant=s.enPassant;moves=[...s.moves];halfmove=s.halfmove;positionHistory=[...s.positionHistory];gameOver=false}
 function findKing(t){for(let r=0;r<8;r++)for(let c=0;c<8;c++)if(board[r][c]===(t==='w'?'♔':'♚'))return [r,c];return null}
 
 function attacksSquare(r,c,by){
@@ -88,7 +88,7 @@ function makeMove(fr,fc,tr,tc){
  document.getElementById('score').textContent=moves.length;
 }
 function allLegalMoves(t){const old=turn;turn=t;const out=[];for(let r=0;r<8;r++)for(let c=0;c<8;c++)if(color(board[r][c])===t)for(const m of legalMovesFor(r,c))out.push([r,c,...m]);turn=old;return out}
-function isThreefold(){return false /* repetition history will be added with position hashing */}
+function isThreefold(){if(!positionHistory.length)return false;const current=positionHistory[positionHistory.length-1];return positionHistory.filter(key=>key===current).length>=3}
 function showResult(text){const turnText=document.getElementById('turnText');turnText.textContent=text;turnText.parentElement.classList.add('result')}
 function clearResult(){document.querySelector('.turn').classList.remove('result')}
 function clickSquare(r,c){
@@ -115,7 +115,7 @@ function updatePanel(){
  const box=document.getElementById('moves');if(!moves.length){box.innerHTML='<div class="empty">Your moves will appear here.</div>';return}
  box.innerHTML='';for(let i=0;i<moves.length;i+=2){const row=document.createElement('div');row.className='move-row';row.innerHTML='<span class="num">'+(i/2+1)+'.</span><span>'+(moves[i]||'')+'</span><span>'+(moves[i+1]||'')+'</span>';box.appendChild(row)}box.scrollTop=box.scrollHeight;
 }
-function newGame(){board=structuredClone(start);turn='w';moves=[];history=[];selected=null;gameOver=false;rights={wK:true,wQ:true,bK:true,bQ:true};enPassant=null;halfmove=0;clearResult();document.getElementById('score').textContent='0';render()}
+function newGame(){board=structuredClone(start);turn='w';moves=[];history=[];selected=null;gameOver=false;rights={wK:true,wQ:true,bK:true,bQ:true};enPassant=null;halfmove=0;positionHistory=[positionKey()];clearResult();document.getElementById('score').textContent='0';render()}
 document.getElementById('newGameBtn').onclick=newGame;document.getElementById('newGameTop').onclick=newGame;
 document.getElementById('flipBtn').onclick=()=>{flipped=!flipped;render()};
 document.getElementById('undoBtn').onclick=()=>{if(!history.length)return;restore(history.pop());clearResult();document.getElementById('score').textContent=moves.length;render()};
@@ -205,7 +205,7 @@ function pieceName(piece){
 function loadPuzzle(){
  const p=currentPuzzle();
  board=structuredClone(p.position);turn=p.side;selected=null;moves=[];history=[];gameOver=false;
- rights={wK:false,wQ:false,bK:false,bQ:false};enPassant=null;halfmove=0;
+ rights={wK:false,wQ:false,bK:false,bQ:false};enPassant=null;halfmove=0;positionHistory=[positionKey()];
  puzzleSolved=false;puzzleActive=true;puzzleAttempts=0;hintsUsed=0;puzzleStep=0;puzzleCorrectSteps=0;
  document.querySelector('.eyebrow').textContent='TACTICAL TRAINING · PUZZLE '+String((puzzleIndex%puzzles.length)+1).padStart(2,'0');
  document.getElementById('puzzleTheme').textContent=p.theme;
@@ -259,7 +259,7 @@ function previewMoveFen(fr,fc,tr,tc){
  moves.push(notation(fr,fc,tr,tc,captured,p==='♔'||p==='♚'));
  turn=opposite(turn);
  const fen=boardFen();
- board=snapshot.board;turn=snapshot.turn;rights=snapshot.rights;enPassant=snapshot.enPassant;moves=snapshot.moves;halfmove=snapshot.halfmove;history=snapshot.history;gameOver=snapshot.gameOver;selected=snapshot.selected;
+ board=snapshot.board;turn=snapshot.turn;rights=snapshot.rights;enPassant=snapshot.enPassant;moves=snapshot.moves;halfmove=snapshot.halfmove;history=snapshot.history;gameOver=snapshot.gameOver;selected=snapshot.selected;positionHistory=snapshot.positionHistory;
  return fen;
 }
 function qualityLabel(loss){
