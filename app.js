@@ -324,7 +324,7 @@ function puzzleClick(r,c){
 const normalClickSquare=clickSquare;
 clickSquare=function(r,c){if(puzzleActive){puzzleClick(r,c);return}normalClickSquare(r,c)};
 function nextPuzzle(){puzzleIndex=(puzzleIndex+1)%puzzles.length;persistProgress();loadPuzzle()}
-document.getElementById('undoBtn')?.addEventListener('click',loadPuzzle);
+document.getElementById('undoBtn')?.addEventListener('click',()=>{if(appMode==='play'){if(!history.length)return;restore(history.pop());clearResult();render();return}loadPuzzle()});
 document.getElementById('hintBtn').onclick=()=>{
  if(!puzzleActive)return;
  const item=currentPuzzle().line[puzzleStep];
@@ -475,11 +475,13 @@ function startPlayMode(){
  document.getElementById('moveCount').textContent='0';
  document.getElementById('feedback').hidden=true;
  document.getElementById('difficultyPicker').hidden=false;
+ document.getElementById('undoBtn').textContent='Undo move';
  render();
 }
 function startTrainingMode(){
  botThinking=false;
  document.getElementById('difficultyPicker').hidden=true;
+ document.getElementById('undoBtn').textContent='Retry puzzle';
  document.querySelector('.eyebrow').textContent='TACTICAL TRAINING';
  document.querySelector('.hero h1').innerHTML='Find the move<br><em>that changes everything.</em>';
  document.querySelector('.subtitle').textContent='Calculate before you touch a piece. The trainer will tell you whether your idea survives the position.';
