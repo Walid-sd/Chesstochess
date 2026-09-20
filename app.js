@@ -80,6 +80,7 @@ function makeMove(fr,fc,tr,tc){
  const n=notation(fr,fc,tr,tc,captured,castle&&Math.abs(tc-fc)===2);applyRaw(fr,fc,tr,tc);
  if(captured||p.toLowerCase()==='p')halfmove=0;else halfmove++;
  moves.push(n);turn=opposite(turn);
+ positionHistory.push(positionKey());
  updateKnowledgePanel();
  const check=inCheck(turn),available=allLegalMoves(turn).length;
  if(available===0){gameOver=true;showResult(check?(turn==='w'?'Black wins by checkmate':'White wins by checkmate'):'Draw by stalemate')}
@@ -246,7 +247,8 @@ function finishPuzzle(){
  const p=currentPuzzle();
  puzzleSolved=true;puzzleActive=false;correctMoves++;solved++;sessionCorrect++;
  persistProgress();
- showFeedback('Solved — '+p.theme,p.explain+' Next puzzle is waiting when you are ready.',true);
+ const accuracy=Math.round(puzzleCorrectSteps/(puzzleCorrectSteps+puzzleAttempts)*100);
+ showFeedback('Solved — '+p.theme,p.explain+' Score: '+accuracy+'% · '+puzzleAttempts+' wrong attempt'+(puzzleAttempts===1?'':'s')+' · '+hintsUsed+' hint'+(hintsUsed===1?'':'s')+'. Next puzzle is waiting when you are ready.',true);
  document.getElementById('turnText').textContent='Puzzle solved';
  recordTrainerMove();
 }
