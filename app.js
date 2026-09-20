@@ -249,7 +249,7 @@ document.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key.toLower
 loadPuzzle();
 
 // --- Browser engine analysis ---
-let engineWorker=null,engineReady=false,engineBusy=false;
+let engineWorker=null,engineReady=false,engineBusy=false,engineCallback=null;
 const ENGINE_URL='https://cdn.jsdelivr.net/npm/stockfish@19.0.0/src/stockfish-19-lite-single.js';
 
 function boardFen(){
@@ -257,6 +257,16 @@ function boardFen(){
  const castle=(rights.wK?'K':'')+(rights.wQ?'Q':'')+(rights.bK?'k':'')+(rights.bQ?'q':'')||'-';
  const ep=enPassant?squareName(enPassant[0],enPassant[1]):'-';
  return rows+' '+turn+' '+castle+' '+ep+' '+halfmove+' '+(Math.floor(moves.length/2)+1);
+}
+function uciToReadable(uci){
+ if(!uci)return '';
+ const out=[];
+ for(let i=0;i+3<uci.length;i+=4){
+   const from=uci.slice(i,i+2),to=uci.slice(i+2,i+4);
+   const promo=uci[i+4]&&/[qrbn]/.test(uci[i+4])?('='+uci[i+4].toUpperCase()):'';
+   out.push(from+'-'+to+promo);
+ }
+ return out.join(' ');
 }
 function engineUi(title,value,line,depth){
  const box=document.getElementById('engineBox');box.hidden=false;
@@ -277,22 +287,30 @@ function ensureEngine(){
        const mate=(msg.match(/ score mate (-?\d+)/)||[])[1];
        const pv=(msg.match(/ pv (.+)$/)||[])[1];
        const value=mate?('Mate '+mate):cp?((Number(cp)/100).toFixed(2)+' eval'):'Thinking…';
-       engineUi('Analysis',value,pv?'PV: '+pv:'Searching…',depth);
+       engineUi('Analysis',value,pv?'PV: '+uciToReadable(pv):'Searching…',depth);
+       if(engineCallback)engineCallback({type:'info',cp:cp?Number(cp):null,mate:mate?Number(mate):null,pv:pv?uciToReadable(pv):'',depth:depth?Number(depth):null});
      }
-     if(msg.startsWith('bestmove')){engineBusy=false;engineUi('Complete','Analysis complete',msg,document.getElementById('engineDepth').textContent.replace('D',''))}
+     if(msg.startsWith('bestmove')){
+       engineBusy=false;
+       const best=(msg.match(/^bestmove\s+(\S+)/)||[])[1]||'';
+       engineUi('Complete','Analysis complete','Best move: '+uciToReadable(best),document.getElementById('engineDepth').textContent.replace('D',''));
+       if(engineCallback)engineCallback({type:'bestmove',bestmove:best});
+       engineCallback=null;
+     }
    };
-   engineWorker.onerror=()=>{engineBusy=false;engineUi('Unavailable','Engine unavailable','The browser could not load the Stockfish worker.',null)};
+   engineWorker.onerror=()=>{engineBusy=false;engineUi('Unavailable','Engine unavailable','The browser could not load the Stockfish worker.',null);engineCallback=null};
    engineWorker.postMessage('uci');
  }catch(err){engineUi('Unavailable','Engine unavailable','Web Workers are not available in this browser.',null)}
 }
-document.getElementById('analyzeBtn').onclick=()=>{
+function analyzePosition(callback){
  ensureEngine();
- if(!engineWorker||!engineReady||engineBusy)return;
- engineBusy=true;
+ if(!engineWorker||!engineReady||engineBusy)return false;
+ engineBusy=true;engineCallback=callback||null;
  engineUi('Thinking','Thinking…','Stockfish is evaluating the current position.',null);
  engineWorker.postMessage('stop');
  engineWorker.postMessage('ucinewgame');
  engineWorker.postMessage('position fen '+boardFen());
  engineWorker.postMessage('go depth 14');
-};
-
+ return true;
+}
+document.getElementById('analyzeBtn').onclick=()=>analyzePosition();
