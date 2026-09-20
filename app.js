@@ -439,7 +439,7 @@ document.getElementById('analyzeBtn').onclick=()=>analyzePosition();
 
 // --- App mode controller ---
 let appMode='home';
-let botDepth=10;
+let botTime=1800;
 let botThinking=false;
 function setMode(mode){
  appMode=mode;
@@ -471,7 +471,7 @@ function startPlayMode(){
  document.querySelector('.subtitle').textContent='Choose a robot difficulty, make your move, and let the computer respond.';
  document.getElementById('sessionStatus').textContent='Computer game';
  document.getElementById('puzzleTheme').textContent='Computer opponent';
- document.getElementById('puzzleMeta').textContent='You play White · '+(botDepth===6?'Easy':botDepth===10?'Medium':'Hard');
+ document.getElementById('puzzleMeta').textContent='You play White · '+(botTime===900?'Easy':botTime===1800?'Medium':'Hard');
  document.getElementById('puzzleIcon').textContent='♟';
  document.getElementById('moveCount').textContent='0';
  document.getElementById('feedback').hidden=true;
@@ -504,8 +504,7 @@ function startComputerTurn(){
    if(Number.isInteger(fr)&&Number.isInteger(fc)&&Number.isInteger(tr)&&Number.isInteger(tc)&&isLegal(fr,fc,tr,tc)){
      makeMove(fr,fc,tr,tc);render();
    }
- },botDepth);
- setTimeout(()=>{if(botThinking&&appMode==='play'){botThinking=false;const legal=allLegalMoves('b');if(legal.length){const m=legal[Math.floor(Math.random()*legal.length)];makeMove(m[0],m[1],m[2],m[3]);render();}}},5000);
+ },botTime);
 }
 clickSquare=function(r,c){
  if(appMode==='play'){
@@ -539,7 +538,7 @@ function bindAppControls(){
  document.getElementById('playNav')?.addEventListener('click',()=>setMode('play'));
  document.getElementById('newGameBtn').onclick=()=>appMode==='training'?nextPuzzle():startPlayMode();
  document.querySelectorAll('#difficultyPicker button').forEach(btn=>btn.addEventListener('click',()=>{
-   botDepth=Number(btn.dataset.depth)||10;
+   botTime=Number(btn.dataset.time)||1800;
    document.querySelectorAll('#difficultyPicker button').forEach(x=>x.classList.remove('selected'));
    btn.classList.add('selected');
    if(appMode==='play')startPlayMode();
