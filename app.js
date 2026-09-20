@@ -208,6 +208,53 @@ function finishPuzzle(){
  document.getElementById('turnText').textContent='Puzzle solved';
  recordTrainerMove();
 }
+function previewMoveFen(fr,fc,tr,tc){
+ const snapshot={board:structuredClone(board),turn,rights:{...rights},enPassant,moves:[...moves],halfmove,history:[...history],gameOver,selected};
+ const p=board[fr][fc];
+ const captured=!!board[tr][tc]||(p?.toLowerCase()==='p'&&enPassant&&tr===enPassant[0]&&tc===enPassant[1]);
+ applyRaw(fr,fc,tr,tc);
+ if(captured||p.toLowerCase()==='p')halfmove=0;else halfmove++;
+ moves.push(notation(fr,fc,tr,tc,captured,p==='♔'||p==='♚'));
+ turn=opposite(turn);
+ const fen=boardFen();
+ board=snapshot.board;turn=snapshot.turn;rights=snapshot.rights;enPassant=snapshot.enPassant;moves=snapshot.moves;halfmove=snapshot.halfmove;history=snapshot.history;gameOver=snapshot.gameOver;selected=snapshot.selected;
+ return fen;
+}
+function qualityLabel(loss){
+ if(loss<=15)return ['Best','The move is essentially engine-optimal.'];
+ if(loss<=40)return ['Good','A small evaluation loss; the position remains under control.'];
+ if(loss<=90)return ['Inaccuracy','The move gives up some of the position’s value.'];
+ if(loss<=200)return ['Mistake','The move loses a meaningful amount of evaluation.'];
+ return ['Blunder','The move gives up a major amount of evaluation.'];
+}
+function formatEval(score){
+ if(score===null||score===undefined)return '—';
+ if(Math.abs(score)>=900)return score>0?'+MATE':'-MATE';
+ return (score>=0?'+':'')+(score/100).toFixed(2);
+}
+function analyzeMoveQuality(fr,fc,tr,tc){
+ const mover=turn;
+ const rootFen=boardFen();
+ const childFen=previewMoveFen(fr,fc,tr,tc);
+ showFeedback('Analyzing move','Stockfish is comparing your move with the position’s best continuation.',false);
+ analyzeFen(rootFen,root=>{
+   if(root.type!=='bestmove')return;
+   const rootScore=root.whiteScore;
+   const best=root.bestmove;
+   analyzeFen(childFen,child=>{
+     if(child.type!=='bestmove')return;
+     const childScore=child.whiteScore;
+     const rootMover=mover==='w'?rootScore:-rootScore;
+     const childMover=mover==='w'?childScore:-childScore;
+     const loss=Math.max(0,rootMover-childMover);
+     const [label,desc]=qualityLabel(loss);
+     const bestText=uciToReadable(best)||'—';
+     const yourText=squareName(fr,fc)+'-'+squareName(tr,tc);
+     engineUi('Move quality',label,'Best: '+bestText+' · Your move: '+yourText+' · Loss: '+loss+' cp',child.depth||root.depth);
+     showFeedback(label,desc+' Best: '+bestText+'. Your move: '+yourText+'. Evaluation loss: '+loss+' cp.',label==='Best'||label==='Good');
+   });
+ });
+}
 function puzzleClick(r,c){
  if(!puzzleActive||puzzleSolved)return false;
  if(actorAtStep()==='opponent')return true;
@@ -218,21 +265,14 @@ function puzzleClick(r,c){
  if(!isLegal(selected.r,selected.c,r,c)){selected=null;render();return true}
  const fr=selected.r,fc=selected.c;
  if(moveMatches(puzzleStep,fr,fc,r,c)){
-   makeMove(fr,fc,r,c);selected=null;puzzleStep++;
+   makeMove(fr,fc,r,c);selected=null;puzzleStep++;puzzleCorrectSteps++;
    const next=currentPuzzle().line[puzzleStep];
    if(!next)finishPuzzle();
    else if(next.actor==='opponent')applyOpponentStep();
    else { recordTrainerMove(); showFeedback('Correct.',''+formatStepLabel()+'. Keep calculating.',true); }
  }else{
    selected=null;puzzleAttempts++;
-   showFeedback('Not the best move.','Try again. The engine can show the strongest continuation.',false);
-   if(typeof analyzePosition==='function'){
-     analyzePosition(result=>{
-       if(result.type==='bestmove'&&puzzleActive){
-         showFeedback('Engine line','Best move: '+uciToReadable(result.bestmove)+'. Now look for the forcing idea behind it.',false);
-       }
-     });
-   }
+   analyzeMoveQuality(fr,fc,r,c);
  }
  render();return true;
 }
@@ -256,7 +296,7 @@ document.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key.toLower
 loadPuzzle();
 
 // --- Browser engine analysis ---
-let engineWorker=null,engineReady=false,engineBusy=false,engineCallback=null;
+let engineWorker=null,engineReady=false,engineBusy=false,engineCallback=null,enginePending=null;
 const ENGINE_URL='https://cdn.jsdelivr.net/npm/stockfish@19.0.0/src/stockfish-19-lite-single.js';
 
 function boardFen(){
@@ -267,13 +307,10 @@ function boardFen(){
 }
 function uciToReadable(uci){
  if(!uci)return '';
- const out=[];
- for(let i=0;i+3<uci.length;i+=4){
-   const from=uci.slice(i,i+2),to=uci.slice(i+2,i+4);
-   const promo=uci[i+4]&&/[qrbn]/.test(uci[i+4])?('='+uci[i+4].toUpperCase()):'';
-   out.push(from+'-'+to+promo);
- }
- return out.join(' ');
+ const from=uci.slice(0,2),to=uci.slice(2,4),promo=uci[4]&&/[qrbn]/.test(uci[4])?('='+uci[4].toUpperCase()):'';
+ const rest=[];
+ for(let i=5;i+3<uci.length;i+=4)rest.push(uci.slice(i,i+2)+'-'+uci.slice(i+2,i+4));
+ return from+'-'+to+promo+(rest.length?' '+rest.join(' '):'');
 }
 function engineUi(title,value,line,depth){
  const box=document.getElementById('engineBox');box.hidden=false;
@@ -281,43 +318,69 @@ function engineUi(title,value,line,depth){
  document.getElementById('engineLine').textContent=line||title;
  document.getElementById('engineDepth').textContent=depth?('D'+depth):'—';
 }
-function ensureEngine(){
- if(engineWorker)return;
+function parseEngineScore(msg,sideToMove){
+ const cp=(msg.match(/ score cp (-?\d+)/)||[])[1];
+ const mate=(msg.match(/ score mate (-?\d+)/)||[])[1];
+ if(mate)return {whiteScore:(sideToMove==='w'?1:-1)*Number(mate)*100000,mate:Number(mate)};
+ if(cp!==undefined)return {whiteScore:(sideToMove==='w'?1:-1)*Number(cp)};
+ return {whiteScore:null,mate:null};
+}
+function ensureEngine(callback){
+ if(engineWorker){if(engineReady&&callback)callback();else if(callback)enginePending=callback;return}
  try{
    engineWorker=new Worker(ENGINE_URL);
+   if(callback)enginePending=callback;
    engineWorker.onmessage=e=>{
      const msg=String(e.data);
-     if(msg==='uciok'){engineReady=true;engineBusy=false;engineUi('Ready','Ready','Stockfish is ready for local analysis.');return}
+     if(msg==='uciok'){
+       engineReady=true;engineBusy=false;
+       engineUi('Ready','Ready','Stockfish is ready for local analysis.');
+       const pending=enginePending;enginePending=null;if(pending)pending();
+       return;
+     }
      if(msg.startsWith('info')&&msg.includes('score')){
        const depth=(msg.match(/ depth (\d+)/)||[])[1];
        const cp=(msg.match(/ score cp (-?\d+)/)||[])[1];
        const mate=(msg.match(/ score mate (-?\d+)/)||[])[1];
        const pv=(msg.match(/ pv (.+)$/)||[])[1];
-       const value=mate?('Mate '+mate):cp?((Number(cp)/100).toFixed(2)+' eval'):'Thinking…';
+       const value=mate?('Mate '+mate):cp!==undefined?((Number(cp)/100).toFixed(2)+' eval'):'Thinking…';
        engineUi('Analysis',value,pv?'PV: '+uciToReadable(pv):'Searching…',depth);
-       if(engineCallback)engineCallback({type:'info',cp:cp?Number(cp):null,mate:mate?Number(mate):null,pv:pv?uciToReadable(pv):'',depth:depth?Number(depth):null});
+       if(engineCallback){
+         const parsed=parseEngineScore(msg,engineCallback.sideToMove||turn);
+         engineCallback({type:'info',cp:cp!==undefined?Number(cp):null,mate:mate?Number(mate):null,pv:pv?uciToReadable(pv):'',depth:depth?Number(depth):null,whiteScore:parsed.whiteScore});
+       }
      }
      if(msg.startsWith('bestmove')){
        engineBusy=false;
        const best=(msg.match(/^bestmove\s+(\S+)/)||[])[1]||'';
        engineUi('Complete','Analysis complete','Best move: '+uciToReadable(best),document.getElementById('engineDepth').textContent.replace('D',''));
-       if(engineCallback)engineCallback({type:'bestmove',bestmove:best});
+       if(engineCallback){
+         const cb=engineCallback;
+         const parsed={type:'bestmove',bestmove:best,whiteScore:cb.lastWhiteScore??null,depth:Number(document.getElementById('engineDepth').textContent.replace('D',''))||null};
+         cb(parsed);
+       }
        engineCallback=null;
      }
    };
-   engineWorker.onerror=()=>{engineBusy=false;engineUi('Unavailable','Engine unavailable','The browser could not load the Stockfish worker.',null);engineCallback=null};
+   engineWorker.onerror=()=>{engineBusy=false;engineUi('Unavailable','Engine unavailable','The browser could not load the Stockfish worker.',null);engineCallback=null;enginePending=null};
    engineWorker.postMessage('uci');
  }catch(err){engineUi('Unavailable','Engine unavailable','Web Workers are not available in this browser.',null)}
 }
+function analyzeFen(fen,callback){
+ const side=(fen.split(' ')[1]||'w');
+ ensureEngine(()=>{
+   if(!engineWorker||!engineReady||engineBusy)return;
+   engineBusy=true;
+   const request={sideToMove:side,lastWhiteScore:null,callback};
+   engineCallback=request;
+   engineUi('Thinking','Thinking…','Stockfish is evaluating the requested position.',null);
+   engineWorker.postMessage('stop');
+   engineWorker.postMessage('ucinewgame');
+   engineWorker.postMessage('position fen '+fen);
+   engineWorker.postMessage('go depth 14');
+ });
+}
 function analyzePosition(callback){
- ensureEngine();
- if(!engineWorker||!engineReady||engineBusy)return false;
- engineBusy=true;engineCallback=callback||null;
- engineUi('Thinking','Thinking…','Stockfish is evaluating the current position.',null);
- engineWorker.postMessage('stop');
- engineWorker.postMessage('ucinewgame');
- engineWorker.postMessage('position fen '+boardFen());
- engineWorker.postMessage('go depth 14');
- return true;
+ analyzeFen(boardFen(),callback);
 }
 document.getElementById('analyzeBtn').onclick=()=>analyzePosition();
