@@ -225,7 +225,14 @@ function puzzleClick(r,c){
    else { recordTrainerMove(); showFeedback('Correct.',''+formatStepLabel()+'. Keep calculating.',true); }
  }else{
    selected=null;puzzleAttempts++;
-   showFeedback('Not the best move.','Try again. Start with checks, captures, and direct threats.',false);
+   showFeedback('Not the best move.','Try again. The engine can show the strongest continuation.',false);
+   if(typeof analyzePosition==='function'){
+     analyzePosition(result=>{
+       if(result.type==='bestmove'&&puzzleActive){
+         showFeedback('Engine line','Best move: '+uciToReadable(result.bestmove)+'. Now look for the forcing idea behind it.',false);
+       }
+     });
+   }
  }
  render();return true;
 }
