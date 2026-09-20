@@ -250,7 +250,7 @@ function analyzeMoveQuality(fr,fc,tr,tc){
      const [label,desc]=qualityLabel(loss);
      const bestText=uciToReadable(best)||'—';
      const yourText=squareName(fr,fc)+'-'+squareName(tr,tc);
-     engineUi('Move quality',label,'Best: '+bestText+' · Your move: '+yourText+' · Loss: '+loss+' cp',child.depth||root.depth);
+     engineUi('Move quality',label,'Best: '+bestText+' · Your move: '+yourText+' · Loss: '+loss+' cp',child.depth||root.depth,{best:bestText,your:yourText,loss});
      showFeedback(label,desc+' Best: '+bestText+'. Your move: '+yourText+'. Evaluation loss: '+loss+' cp.',label==='Best'||label==='Good');
    });
  });
@@ -312,11 +312,16 @@ function uciToReadable(uci){
  for(let i=5;i+3<uci.length;i+=4)rest.push(uci.slice(i,i+2)+'-'+uci.slice(i+2,i+4));
  return from+'-'+to+promo+(rest.length?' '+rest.join(' '):'');
 }
-function engineUi(title,value,line,depth){
+function engineUi(title,value,line,depth,metrics){
  const box=document.getElementById('engineBox');box.hidden=false;
  document.getElementById('engineEval').textContent=value;
  document.getElementById('engineLine').textContent=line||title;
  document.getElementById('engineDepth').textContent=depth?('D'+depth):'—';
+ if(metrics){
+   document.getElementById('engineBest').textContent=metrics.best||'—';
+   document.getElementById('engineYour').textContent=metrics.your||'—';
+   document.getElementById('engineLoss').textContent=metrics.loss!==undefined?metrics.loss+' cp':'—';
+ }
 }
 function parseEngineScore(msg,sideToMove){
  const cp=(msg.match(/ score cp (-?\d+)/)||[])[1];
