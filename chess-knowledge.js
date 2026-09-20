@@ -118,3 +118,112 @@ function getChessKnowledge(category,key){
 }
 
 window.ChessKnowledge={CHESS_KNOWLEDGE,knowledgeMoveAliases,normalizeKnowledgeMove,detectOpeningKnowledge,getChessKnowledge};
+
+
+function knowledgeColor(piece){
+ if('♔♕♖♗♘♙'.includes(piece))return 'w';
+ if('♚♛♜♝♞♟'.includes(piece))return 'b';
+ return null;
+}
+function knowledgeValue(piece){
+ const k=piece?.toLowerCase();
+ return k==='q'?9:k==='r'?5:k==='b'||k==='n'?3:k==='p'?1:k==='k'?100:0;
+}
+function knowledgeLineClear(position,fr,fc,tr,tc){
+ const dr=Math.sign(tr-fr),dc=Math.sign(tc-fc);
+ let r=fr+dr,c=fc+dc;
+ while(r!==tr||c!==tc){if(position[r]?.[c])return false;r+=dr;c+=dc}
+ return true;
+}
+function knowledgeAttacks(position,fr,fc,tr,tc){
+ const p=position[fr]?.[fc],kind=p?.toLowerCase(),color=knowledgeColor(p);
+ if(!p||!color)return false;
+ const dr=tr-fr,dc=tc-fc;
+ if(kind==='n')return Math.abs(dr)*Math.abs(dc)===2;
+ if(kind==='k')return Math.max(Math.abs(dr),Math.abs(dc))===1;
+ if(kind==='p')return Math.abs(dc)===1&&dr===(color==='w'?-1:1);
+ if(kind==='b'&&(Math.abs(dr)!==Math.abs(dc)))return false;
+ if(kind==='r'&&(dr!==0&&dc!==0))return false;
+ if(kind==='q'&&dr!==0&&dc!==0&&Math.abs(dr)!==Math.abs(dc))return false;
+ return (dr===0||dc===0||Math.abs(dr)===Math.abs(dc))&&knowledgeLineClear(position,fr,fc,tr,tc);
+}
+function knowledgeTargets(position,fr,fc){
+ const out=[];
+ for(let r=0;r<8;r++)for(let c=0;c<8;c++){
+  const target=position[r]?.[c];
+  if(target&&knowledgeColor(target)!==knowledgeColor(position[fr]?.[fc])&&knowledgeAttacks(position,fr,fc,r,c))out.push([r,c,target]);
+ }
+ return out;
+}
+function detectForks(position){
+ const found=[];
+ for(let r=0;r<8;r++)for(let c=0;c<8;c++){
+  const p=position[r]?.[c];if(!p)continue;
+  const targets=knowledgeTargets(position,r,c).filter(x=>knowledgeValue(x[2])>=3);
+  if(targets.length>=2)found.push({type:"fork",side:knowledgeColor(p),piece:p,from:[r,c],targets:targets.map(x=>({square:[x[0],x[1]],piece:x[2]}))});
+ }
+ return found;
+}
+function detectPinsAndSkewers(position){
+ const found=[];
+ const directions=[[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]];
+ for(let r=0;r<8;r++)for(let c=0;c<8;c++){
+  const p=position[r]?.[c];if(!p)continue;
+  const side=knowledgeColor(p);if(!side||!['♗','♝','♖','♜','♕','♛'].includes(p))continue;
+  for(const [dr,dc] of directions){
+   let rr=r+dr,cc=c+dc,first=null;
+   while(rr>=0&&rr<8&&cc>=0&&cc<8){
+    const q=position[rr][cc];
+    if(q){
+     if(!first){
+      if(knowledgeColor(q)===side)break;
+      first={r:rr,c:cc,p:q};
+     }else{
+      if(knowledgeColor(q)!==side){
+       const value1=knowledgeValue(first.p),value2=knowledgeValue(q);
+       if(q.toLowerCase()==='k')found.push({type:"pin",side,piece:p,from:[r,c],target:first,behind:q});
+       else if(value2>value1)found.push({type:"skewer",side,piece:p,from:[r,c],target:first,behind:q});
+      }
+      break;
+     }
+    }
+    rr+=dr;cc+=dc;
+   }
+  }
+ }
+ return found;
+}
+function detectDiscoveredPatterns(position){
+ const found=[];
+ for(let r=0;r<8;r++)for(let c=0;c<8;c++){
+  const p=position[r]?.[c];if(!p)continue;
+  const side=knowledgeColor(p);
+  for(const [dr,dc] of [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]]){
+   let rr=r+dr,cc=c+dc,blockers=0,slider=null;
+   while(rr>=0&&rr<8&&cc>=0&&cc<8){
+    const q=position[rr][cc];
+    if(q){
+     if(!slider){
+      if(knowledgeColor(q)===side)break;
+      slider={r:rr,c:cc,p:q};
+     }else{
+      if(knowledgeColor(q)===side&&['q','r','b'].includes(slider.p.toLowerCase())){
+       blockers++;
+       if(blockers===1)found.push({type:"discovered-attack-potential",side,piece:p,from:[r,c],slider,target:q});
+      }
+      break;
+     }
+    }
+    rr+=dr;cc+=dc;
+   }
+  }
+ }
+ return found;
+}
+function detectPositionKnowledge(position){
+ const forks=detectForks(position);
+ const pins=detectPinsAndSkewers(position);
+ const discovered=detectDiscoveredPatterns(position);
+ return {forks,pins: pins.filter(x=>x.type==='pin'),skewers:pins.filter(x=>x.type==='skewer'),discovered};
+}
+window.ChessKnowledge.detectPositionKnowledge=detectPositionKnowledge;
