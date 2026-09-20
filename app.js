@@ -129,7 +129,7 @@ render();
 const puzzles=[
  {id:'mate-one',theme:'Mate in one',difficulty:'Beginner',icon:'♛',side:'w',rating:800,concept:'Force mate',
   position:[[null,null,null,null,null,null,null,'♚'],[null,null,null,null,null,'♕',null,null],[null,null,null,null,null,null,'♔',null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null]],
-  line:[{actor:'player',move:[3,5,1,7]}],explain:'Qh7 is mate. Your king protects h7, so the black king has no escape.'},
+  line:[{actor:'player',move:[1,5,1,7]}],explain:'Qh7 is mate. Your king protects h7, so the black king has no escape.'},
  {id:'queen-net',theme:'Queen net',difficulty:'Beginner',icon:'♕',side:'w',rating:850,concept:'King restriction',
   position:[[null,null,null,null,null,null,null,'♚'],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,'♔',null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null]],
   line:[{actor:'player',move:[2,6,1,6]}],explain:'Qg7 is protected by the king on g6 and controls every escape square around h8.'},
@@ -137,7 +137,7 @@ const puzzles=[
   position:[[null,null,null,null,null,null,null,'♚'],[null,null,null,null,null,null,null,null],[null,null,null,null,'♔',null,null],[null,null,null,null,null,null,'♕',null,null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null]],
   line:[{actor:'player',move:[3,6,1,6]}],explain:'Qg7 is protected by the king on f6 and seals the king on h8.'},
  {id:'knight-sequence',theme:'Knight check sequence',difficulty:'Intermediate',icon:'♞',side:'w',rating:1100,concept:'Forcing sequence',
-  position:[[null,null,null,null,null,null,null,'♚'],[null,null,null,null,null,null,null,'♜'],[null,null,null,null,null,null,'♔','♞'],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null]],
+  position:[[null,null,null,null,null,null,null,'♚'],[null,null,null,null,null,null,null,'♜'],[null,null,null,null,null,null,'♔','♘'],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null]],
   line:[
    {actor:'player',move:[2,7,1,5]},
    {actor:'opponent',move:[0,7,0,6]},
