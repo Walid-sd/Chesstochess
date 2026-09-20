@@ -165,12 +165,28 @@ function updateKnowledgePanel(){
  const type=document.getElementById('knowledgeType');
  if(!panel||!window.ChessKnowledge)return;
  const matches=window.ChessKnowledge.detectOpeningKnowledge(moves);
- if(!matches.length){
-   panel.textContent='Opening not identified';
+ const motifs=window.ChessKnowledge.detectPositionKnowledge(board);
+ const tactical=[];
+ if(motifs.forks.length)tactical.push('Fork');
+ if(motifs.pins.length)tactical.push('Pin');
+ if(motifs.skewers.length)tactical.push('Skewer');
+ if(motifs.discovered.length)tactical.push('Discovered attack');
+ if(matches.length){
+   const match=matches[0];
+   const entry=window.ChessKnowledge.getChessKnowledge('openings',match.id);
+   panel.textContent=match.name+(match.variant?' · '+match.variant:'');
+   type.textContent=tactical.length?tactical.join(' · ').toUpperCase():'OPENING';
+   idea.textContent=tactical.length?'Detected motif: '+tactical.join(', ')+'.':(entry?.ideas?.slice(0,2).join(' · ')||'Recognized chess pattern.');
+ }else if(tactical.length){
+   panel.textContent=tactical[0]+' detected';
+   type.textContent='TACTIC';
+   idea.textContent='The current position contains a recognizable tactical pattern.';
+ }else{
+   panel.textContent='No named pattern yet';
    type.textContent='—';
-   idea.textContent='The knowledge engine is waiting for a recognizable move pattern.';
-   return;
+   idea.textContent='The knowledge engine is waiting for a recognizable opening or tactical pattern.';
  }
+}
  const match=matches[0];
  const entry=window.ChessKnowledge.getChessKnowledge('openings',match.id);
  panel.textContent=match.name+(match.variant?' · '+match.variant:'');
