@@ -347,7 +347,8 @@ function ensureEngine(callback){
        engineUi('Analysis',value,pv?'PV: '+uciToReadable(pv):'Searching…',depth);
        if(engineCallback){
          const parsed=parseEngineScore(msg,engineCallback.sideToMove||turn);
-         engineCallback({type:'info',cp:cp!==undefined?Number(cp):null,mate:mate?Number(mate):null,pv:pv?uciToReadable(pv):'',depth:depth?Number(depth):null,whiteScore:parsed.whiteScore});
+         engineCallback.lastWhiteScore=parsed.whiteScore;
+         if(engineCallback.callback)engineCallback.callback({type:'info',cp:cp!==undefined?Number(cp):null,mate:mate?Number(mate):null,pv:pv?uciToReadable(pv):'',depth:depth?Number(depth):null,whiteScore:parsed.whiteScore});
        }
      }
      if(msg.startsWith('bestmove')){
