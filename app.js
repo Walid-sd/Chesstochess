@@ -521,7 +521,6 @@ function bindAppControls(){
  document.getElementById('homeNav')?.addEventListener('click',()=>setMode('home'));
  document.getElementById('trainNav')?.addEventListener('click',()=>setMode('training'));
  document.getElementById('playNav')?.addEventListener('click',()=>setMode('play'));
- document.getElementById('newGameTop').onclick=()=>appMode==='training'?loadPuzzle():startPlayMode();
  document.getElementById('newGameBtn').onclick=()=>appMode==='training'?nextPuzzle():startPlayMode();
  document.querySelectorAll('#difficultyPicker button').forEach(btn=>btn.addEventListener('click',()=>{
    botDepth=Number(btn.dataset.depth)||10;
