@@ -123,16 +123,16 @@ render();
 
 // --- Tactical trainer layer ---
 const puzzles=[
- {theme:'Mate in one',difficulty:'Beginner',icon:'♛',side:'w',
+ {id:'mate-one',theme:'Mate in one',difficulty:'Beginner',icon:'♛',side:'w',rating:800,concept:'Force mate',
   position:[[null,null,null,null,null,null,null,'♚'],[null,null,null,null,null,'♕',null,null],[null,null,null,null,null,null,'♔',null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null]],
   line:[{actor:'player',move:[3,5,1,7]}],explain:'Qh7 is mate. Your king protects h7, so the black king has no escape.'},
- {theme:'Queen net',difficulty:'Beginner',icon:'♕',side:'w',
+ {id:'queen-net',theme:'Queen net',difficulty:'Beginner',icon:'♕',side:'w',rating:850,concept:'King restriction',
   position:[[null,null,null,null,null,null,null,'♚'],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,'♔',null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null]],
   line:[{actor:'player',move:[2,6,1,6]}],explain:'Qg7 is protected by the king on g6 and controls every escape square around h8.'},
- {theme:'Protected queen',difficulty:'Beginner',icon:'♕',side:'w',
+ {id:'protected-queen',theme:'Protected queen',difficulty:'Beginner',icon:'♕',side:'w',rating:900,concept:'Protected piece',
   position:[[null,null,null,null,null,null,null,'♚'],[null,null,null,null,null,null,null,null],[null,null,null,null,'♔',null,null],[null,null,null,null,null,null,'♕',null,null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null]],
   line:[{actor:'player',move:[3,6,1,6]}],explain:'Qg7 is protected by the king on f6 and seals the king on h8.'},
- {theme:'Knight check sequence',difficulty:'Intermediate',icon:'♞',side:'w',
+ {id:'knight-sequence',theme:'Knight check sequence',difficulty:'Intermediate',icon:'♞',side:'w',rating:1100,concept:'Forcing sequence',
   position:[[null,null,null,null,null,null,null,'♚'],[null,null,null,null,null,null,null,'♜'],[null,null,null,null,null,null,'♔','♞'],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null]],
   line:[
    {actor:'player',move:[2,7,1,5]},
@@ -145,7 +145,7 @@ const puzzles=[
 let puzzleIndex=Number(localStorage.getItem('ct-puzzle-index')||0);
 let correctMoves=Number(localStorage.getItem('ct-correct')||0);
 let solved=Number(localStorage.getItem('ct-solved')||0);
-let puzzleActive=true,puzzleSolved=false,puzzleAttempts=0,hintsUsed=0,puzzleStep=0;
+let puzzleActive=true,puzzleSolved=false,puzzleAttempts=0,hintsUsed=0,puzzleStep=0,puzzleCorrectSteps=0;
 
 function currentPuzzle(){return puzzles[puzzleIndex%puzzles.length]}
 function persistProgress(){
@@ -155,6 +155,9 @@ function persistProgress(){
 }
 function actorAtStep(){return currentPuzzle().line[puzzleStep]?.actor}
 function puzzleMoveCount(){return currentPuzzle().line.filter(x=>x.actor==='player').length}
+function playerStepNumber(){return currentPuzzle().line.slice(0,puzzleStep).filter(x=>x.actor==='player').length}
+function formatStepLabel(){return 'Move '+(playerStepNumber()+1)+' of '+puzzleMoveCount()}
+function recordTrainerMove(){document.getElementById('moveCount').textContent=playerStepNumber()+' / '+puzzleMoveCount();}
 function squareName(r,c){return files[c]+(8-r)}
 function pieceName(piece){
  return piece==='♕'||piece==='♛'?'queen':piece==='♖'||piece==='♜'?'rook':piece==='♘'||piece==='♞'?'knight':piece==='♗'||piece==='♝'?'bishop':piece==='♙'||piece==='♟'?'pawn':'piece';
@@ -163,10 +166,10 @@ function loadPuzzle(){
  const p=currentPuzzle();
  board=structuredClone(p.position);turn=p.side;selected=null;moves=[];history=[];gameOver=false;
  rights={wK:false,wQ:false,bK:false,bQ:false};enPassant=null;halfmove=0;
- puzzleSolved=false;puzzleActive=true;puzzleAttempts=0;hintsUsed=0;puzzleStep=0;
+ puzzleSolved=false;puzzleActive=true;puzzleAttempts=0;hintsUsed=0;puzzleStep=0;puzzleCorrectSteps=0;
  document.querySelector('.eyebrow').textContent='TACTICAL TRAINING · PUZZLE '+String((puzzleIndex%puzzles.length)+1).padStart(2,'0');
  document.getElementById('puzzleTheme').textContent=p.theme;
- document.getElementById('puzzleMeta').textContent=p.difficulty+' · '+puzzleMoveCount()+' player '+(puzzleMoveCount()===1?'move':'moves');
+ document.getElementById('puzzleMeta').textContent=p.difficulty+' · '+p.concept+' · '+p.rating+' rating';
  document.getElementById('puzzleIcon').textContent=p.icon;
  document.getElementById('moveCount').textContent='0 / '+puzzleMoveCount();
  document.getElementById('feedback').hidden=true;
@@ -194,7 +197,8 @@ function applyOpponentStep(){
  }
  makeMove(fr,fc,tr,tc);
  puzzleStep++;
- showFeedback('Opponent replied','Now calculate the continuation before moving.',true);
+ recordTrainerMove();
+ showFeedback('Opponent replied',formatStepLabel()+'. Calculate the continuation before moving.',true);
 }
 function finishPuzzle(){
  const p=currentPuzzle();
@@ -202,6 +206,7 @@ function finishPuzzle(){
  persistProgress();
  showFeedback('Solved — '+p.theme,p.explain+' Next puzzle is waiting when you are ready.',true);
  document.getElementById('turnText').textContent='Puzzle solved';
+ recordTrainerMove();
 }
 function puzzleClick(r,c){
  if(!puzzleActive||puzzleSolved)return false;
@@ -217,7 +222,7 @@ function puzzleClick(r,c){
    const next=currentPuzzle().line[puzzleStep];
    if(!next)finishPuzzle();
    else if(next.actor==='opponent')applyOpponentStep();
-   else showFeedback('Correct.','Now calculate the continuation.',true);
+   else { recordTrainerMove(); showFeedback('Correct.',''+formatStepLabel()+'. Keep calculating.',true); }
  }else{
    selected=null;puzzleAttempts++;
    showFeedback('Not the best move.','Try again. Start with checks, captures, and direct threats.',false);
