@@ -56,7 +56,7 @@ function legalMovesFor(r,c){
 function isLegal(fr,fc,tr,tc){return legalMovesFor(fr,fc).some(([r,c])=>r===tr&&c===tc)}
 
 function applyRaw(fr,fc,tr,tc){
- const p=board[fr][fc],t=color(p),kind=p.toLowerCase();
+ const p=board[fr][fc],kind=p.toLowerCase();
  if(kind==='p'&&enPassant&&tr===enPassant[0]&&tc===enPassant[1]&&!board[tr][tc])board[fr][tc]=null;
  if(kind==='k'&&Math.abs(tc-fc)===2){
    const rookFrom=tc>fc?7:0,rookTo=tc>fc?5:3;board[fr][rookTo]=board[fr][rookFrom];board[fr][rookFrom]=null;
@@ -77,7 +77,7 @@ function notation(fr,fc,tr,tc,captured,castle){
 }
 function makeMove(fr,fc,tr,tc){
  history.push(cloneState());const p=board[fr][fc],castle=p==='♔'||p==='♚';const captured=!!board[tr][tc]||(p?.toLowerCase()==='p'&&enPassant&&tr===enPassant[0]&&tc===enPassant[1]);
- const n=notation(fr,fc,tr,tc,captured,castle&&Math.abs(tc-fc)===2);const before=structuredClone(board);applyRaw(fr,fc,tr,tc);
+ const n=notation(fr,fc,tr,tc,captured,castle&&Math.abs(tc-fc)===2);applyRaw(fr,fc,tr,tc);
  if(captured||p.toLowerCase()==='p')halfmove=0;else halfmove++;
  moves.push(n);turn=opposite(turn);
  const check=inCheck(turn),available=allLegalMoves(turn).length;
@@ -85,7 +85,6 @@ function makeMove(fr,fc,tr,tc){
  else if(halfmove>=100){gameOver=true;showResult('Draw by 50-move rule')}
  else if(isThreefold()){gameOver=true;showResult('Draw by threefold repetition')}
  document.getElementById('score').textContent=moves.length;
- return before;
 }
 function allLegalMoves(t){const old=turn;turn=t;const out=[];for(let r=0;r<8;r++)for(let c=0;c<8;c++)if(color(board[r][c])===t)for(const m of legalMovesFor(r,c))out.push([r,c,...m]);turn=old;return out}
 function isThreefold(){return false /* repetition history will be added with position hashing */}
@@ -102,8 +101,7 @@ function render(){
  const el=document.getElementById('board');el.innerHTML='';const order=flipped?[...Array(8).keys()].reverse():[...Array(8).keys()];
  order.forEach(r=>order.forEach(c=>{const sq=document.createElement('div');sq.className='square '+((r+c)%2?'dark':'light');
    if(selected?.r===r&&selected?.c===c)sq.classList.add('selected');if(selected&&isLegal(selected.r,selected.c,r,c))sq.classList.add(board[r][c]?'capture':'legal');
-   const p=board[r][c];if(p){const span=document.createElement('span');span.className='piece '+(color(p)==='w'?'white-piece':'black-piece');span.textContent=p;sq.appendChild(span)}
-   sq.onclick=()=>clickSquare(r,c);el.appendChild(sq)}));renderCoords();updatePanel();
+   const p=board[r][c];if(p){const span=document.createElement('span');span.className='piece '+(color(p)==='w'?'white-piece':'black-piece');span.textContent=p;sq.appendChild(span)}sq.onclick=()=>clickSquare(r,c);el.appendChild(sq)}));renderCoords();updatePanel();
 }
 function renderCoords(){
  const f=document.getElementById('files'),r=document.getElementById('ranks');f.innerHTML='';r.innerHTML='';
@@ -127,22 +125,27 @@ render();
 const puzzles=[
  {theme:'Mate in one',difficulty:'Beginner',icon:'♛',side:'w',
   position:[[null,null,null,null,null,null,null,'♚'],[null,null,null,null,null,'♕',null,null],[null,null,null,null,null,null,'♔',null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null]],
-  solution:[[3,5,1,7]],explain:'The queen slides to h7. Your king protects h7, so the black king has no escape.'},
+  line:[{actor:'player',move:[3,5,1,7]}],explain:'Qh7 is mate. Your king protects h7, so the black king has no escape.'},
  {theme:'Queen net',difficulty:'Beginner',icon:'♕',side:'w',
   position:[[null,null,null,null,null,null,null,'♚'],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,'♔',null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null]],
-  solution:[[2,6,1,6]],explain:'Qg7 is protected by the king on g6 and controls h8, f8, h7 and f7.'},
+  line:[{actor:'player',move:[2,6,1,6]}],explain:'Qg7 is protected by the king on g6 and controls every escape square around h8.'},
  {theme:'Protected queen',difficulty:'Beginner',icon:'♕',side:'w',
-  position:[[null,null,null,null,null,null,null,'♚'],[null,null,null,null,null,null,null,null],[null,null,null,null,null,'♔',null,null],[null,null,null,null,null,null,'♕',null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null]],
-  solution:[[3,6,1,6]],explain:'Qg7 is protected by the king on f6. The queen seals every flight square around h8.'},
- {theme:'Knight mating net',difficulty:'Intermediate',icon:'♞',side:'w',
+  position:[[null,null,null,null,null,null,null,'♚'],[null,null,null,null,null,null,null,null],[null,null,null,null,'♔',null,null],[null,null,null,null,null,null,'♕',null,null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null]],
+  line:[{actor:'player',move:[3,6,1,6]}],explain:'Qg7 is protected by the king on f6 and seals the king on h8.'},
+ {theme:'Knight check sequence',difficulty:'Intermediate',icon:'♞',side:'w',
   position:[[null,null,null,null,null,null,null,'♚'],[null,null,null,null,null,null,null,'♜'],[null,null,null,null,null,null,'♔','♞'],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null]],
-  solution:[[2,7,1,5]],explain:'Nf7 checks the king. Your king covers h7, while the rook on g8 removes the final flight square.'}
-]
+  line:[
+   {actor:'player',move:[2,7,1,5]},
+   {actor:'opponent',move:[0,7,0,6]},
+   {actor:'player',move:[1,5,2,7]}
+  ],
+  explain:'Nf7+ forces the king away from h8. After ...Kg8, Nh6+ continues the checking sequence.'}
+];
 
 let puzzleIndex=Number(localStorage.getItem('ct-puzzle-index')||0);
 let correctMoves=Number(localStorage.getItem('ct-correct')||0);
 let solved=Number(localStorage.getItem('ct-solved')||0);
-let puzzleActive=true,puzzleSolved=false,puzzleAttempts=0,hintsUsed=0;
+let puzzleActive=true,puzzleSolved=false,puzzleAttempts=0,hintsUsed=0,puzzleStep=0;
 
 function currentPuzzle(){return puzzles[puzzleIndex%puzzles.length]}
 function persistProgress(){
@@ -150,16 +153,22 @@ function persistProgress(){
  localStorage.setItem('ct-correct',String(correctMoves));
  localStorage.setItem('ct-solved',String(solved));
 }
+function actorAtStep(){return currentPuzzle().line[puzzleStep]?.actor}
+function puzzleMoveCount(){return currentPuzzle().line.filter(x=>x.actor==='player').length}
+function squareName(r,c){return files[c]+(8-r)}
+function pieceName(piece){
+ return piece==='♕'||piece==='♛'?'queen':piece==='♖'||piece==='♜'?'rook':piece==='♘'||piece==='♞'?'knight':piece==='♗'||piece==='♝'?'bishop':piece==='♙'||piece==='♟'?'pawn':'piece';
+}
 function loadPuzzle(){
  const p=currentPuzzle();
  board=structuredClone(p.position);turn=p.side;selected=null;moves=[];history=[];gameOver=false;
  rights={wK:false,wQ:false,bK:false,bQ:false};enPassant=null;halfmove=0;
- puzzleSolved=false;puzzleActive=true;puzzleAttempts=0;hintsUsed=0;
+ puzzleSolved=false;puzzleActive=true;puzzleAttempts=0;hintsUsed=0;puzzleStep=0;
  document.querySelector('.eyebrow').textContent='TACTICAL TRAINING · PUZZLE '+String((puzzleIndex%puzzles.length)+1).padStart(2,'0');
  document.getElementById('puzzleTheme').textContent=p.theme;
- document.getElementById('puzzleMeta').textContent=p.difficulty+' · Find the best move';
+ document.getElementById('puzzleMeta').textContent=p.difficulty+' · '+puzzleMoveCount()+' player '+(puzzleMoveCount()===1?'move':'moves');
  document.getElementById('puzzleIcon').textContent=p.icon;
- document.getElementById('moveCount').textContent='0 / '+p.solution.length;
+ document.getElementById('moveCount').textContent='0 / '+puzzleMoveCount();
  document.getElementById('feedback').hidden=true;
  document.getElementById('sessionStatus').textContent='Puzzle '+((puzzleIndex%puzzles.length)+1)+' of '+puzzles.length;
  document.getElementById('score').textContent=correctMoves;
@@ -170,27 +179,45 @@ function showFeedback(title,text,good){
  document.getElementById('feedbackTitle').textContent=title;
  document.getElementById('feedbackText').textContent=text;
 }
-function matchesStep(p,step,fr,fc,tr,tc){
- return p.solution[step]&&p.solution[step][0]===fr&&p.solution[step][1]===fc&&p.solution[step][2]===tr&&p.solution[step][3]===tc;
+function moveMatches(step,fr,fc,tr,tc){
+ const item=currentPuzzle().line[step];
+ return item?.move?.every((v,i)=>v===[fr,fc,tr,tc][i]);
+}
+function applyOpponentStep(){
+ const item=currentPuzzle().line[puzzleStep];
+ if(!item||item.actor!=='opponent')return;
+ const [fr,fc,tr,tc]=item.move;
+ if(!isLegal(fr,fc,tr,tc)){
+   showFeedback('Puzzle data error','The configured opponent response is not legal from this position.',false);
+   puzzleActive=false;
+   return;
+ }
+ makeMove(fr,fc,tr,tc);
+ puzzleStep++;
+ showFeedback('Opponent replied','Now calculate the continuation before moving.',true);
+}
+function finishPuzzle(){
+ const p=currentPuzzle();
+ puzzleSolved=true;puzzleActive=false;correctMoves++;solved++;
+ persistProgress();
+ showFeedback('Solved — '+p.theme,p.explain+' Next puzzle is waiting when you are ready.',true);
+ document.getElementById('turnText').textContent='Puzzle solved';
 }
 function puzzleClick(r,c){
  if(!puzzleActive||puzzleSolved)return false;
+ if(actorAtStep()==='opponent')return true;
  if(!selected){
    if(board[r][c]&&color(board[r][c])===turn){selected={r,c};render()}
    return true;
  }
  if(!isLegal(selected.r,selected.c,r,c)){selected=null;render();return true}
- const fr=selected.r,fc=selected.c,p=currentPuzzle(),step=moves.length;
- if(matchesStep(p,step,fr,fc,r,c)){
-   makeMove(fr,fc,r,c);selected=null;
-   if(moves.length>=p.solution.length){
-     puzzleSolved=true;puzzleActive=false;correctMoves++;solved++;
-     persistProgress();
-     showFeedback('Solved — '+p.theme,p.explain+' Next puzzle is waiting when you are ready.',true);
-     document.getElementById('turnText').textContent='Puzzle solved';
-   }else{
-     showFeedback('Correct.','Now calculate the continuation.',true);
-   }
+ const fr=selected.r,fc=selected.c;
+ if(moveMatches(puzzleStep,fr,fc,r,c)){
+   makeMove(fr,fc,r,c);selected=null;puzzleStep++;
+   const next=currentPuzzle().line[puzzleStep];
+   if(!next)finishPuzzle();
+   else if(next.actor==='opponent')applyOpponentStep();
+   else showFeedback('Correct.','Now calculate the continuation.',true);
  }else{
    selected=null;puzzleAttempts++;
    showFeedback('Not the best move.','Try again. Start with checks, captures, and direct threats.',false);
@@ -203,7 +230,15 @@ function nextPuzzle(){puzzleIndex=(puzzleIndex+1)%puzzles.length;persistProgress
 document.getElementById('newGameBtn').onclick=nextPuzzle;
 document.getElementById('newGameTop').onclick=nextPuzzle;
 document.getElementById('undoBtn').onclick=loadPuzzle;
-document.getElementById('hintBtn').onclick=()=>{if(!puzzleActive)return;const p=currentPuzzle(),step=moves.length,target=p.solution[step];if(!target)return;hintsUsed++;const piece=board[target[0]][target[1]];showFeedback('Hint','Look at the '+(piece==='♕'||piece==='♛'?'queen':piece==='♖'||piece==='♜'?'rook':piece==='♘'||piece==='♞'?'knight':'piece')+' on '+files[target[1]]+(8-target[0])+'. Now find its strongest forcing move.',false);};
+document.getElementById('hintBtn').onclick=()=>{
+ if(!puzzleActive)return;
+ const item=currentPuzzle().line[puzzleStep];
+ if(!item||item.actor!=='player')return;
+ hintsUsed++;
+ const [fr,fc]=item.move;
+ const piece=board[fr]?.[fc];
+ showFeedback('Hint','Look at the '+pieceName(piece)+' on '+squareName(fr,fc)+'. Find its strongest forcing move.',false);
+};
 document.getElementById('flipBtn').onclick=()=>{flipped=!flipped;render()};
 document.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='n'){e.preventDefault();nextPuzzle()}});
 loadPuzzle();
