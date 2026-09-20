@@ -118,7 +118,6 @@ function updatePanel(){
  box.innerHTML='';for(let i=0;i<moves.length;i+=2){const row=document.createElement('div');row.className='move-row';row.innerHTML='<span class="num">'+(i/2+1)+'.</span><span>'+(moves[i]||'')+'</span><span>'+(moves[i+1]||'')+'</span>';box.appendChild(row)}box.scrollTop=box.scrollHeight;
 }
 function newGame(){board=structuredClone(start);turn='w';moves=[];history=[];selected=null;gameOver=false;rights={wK:true,wQ:true,bK:true,bQ:true};enPassant=null;halfmove=0;positionHistory=[positionKey()];clearResult();document.getElementById('score').textContent='0';render()}
-document.getElementById('newGameBtn')?.addEventListener('click',newGame);
 document.getElementById('flipBtn').onclick=()=>{flipped=!flipped;render()};
 document.getElementById('undoBtn').onclick=()=>{if(!history.length)return;restore(history.pop());clearResult();document.getElementById('score').textContent=moves.length;render()};
 document.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='n'){e.preventDefault();newGame()}});
@@ -325,7 +324,6 @@ function puzzleClick(r,c){
 const normalClickSquare=clickSquare;
 clickSquare=function(r,c){if(puzzleActive){puzzleClick(r,c);return}normalClickSquare(r,c)};
 function nextPuzzle(){puzzleIndex=(puzzleIndex+1)%puzzles.length;persistProgress();loadPuzzle()}
-document.getElementById('newGameBtn')?.addEventListener('click',nextPuzzle);
 document.getElementById('undoBtn')?.addEventListener('click',loadPuzzle);
 document.getElementById('hintBtn').onclick=()=>{
  if(!puzzleActive)return;
