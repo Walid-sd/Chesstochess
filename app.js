@@ -321,8 +321,7 @@ function puzzleClick(r,c){
  }
  render();return true;
 }
-const normalClickSquare=clickSquare;
-clickSquare=function(r,c){if(puzzleActive){puzzleClick(r,c);return}normalClickSquare(r,c)};
+const baseClickSquare=clickSquare;
 function nextPuzzle(){puzzleIndex=(puzzleIndex+1)%puzzles.length;persistProgress();loadPuzzle()}
 document.getElementById('undoBtn')?.addEventListener('click',()=>{if(appMode==='play'){if(!history.length)return;restore(history.pop());clearResult();render();return}loadPuzzle()});
 document.getElementById('hintBtn').onclick=()=>{
@@ -506,12 +505,11 @@ function startComputerTurn(){
  },botDepth);
  setTimeout(()=>{if(botThinking&&appMode==='play'){botThinking=false;const legal=allLegalMoves('b');if(legal.length){const m=legal[Math.floor(Math.random()*legal.length)];makeMove(m[0],m[1],m[2],m[3]);render();}}},5000);
 }
-const originalPlayClick=clickSquare;
 clickSquare=function(r,c){
  if(appMode==='play'){
    if(botThinking||turn!=='w'||gameOver)return;
    const before=moves.length;
-   originalPlayClick(r,c);
+   baseClickSquare(r,c);
    if(moves.length>before&&turn==='b'&&!gameOver)setTimeout(startComputerTurn,180);
    return;
  }
