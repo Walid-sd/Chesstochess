@@ -122,3 +122,57 @@ document.getElementById('flipBtn').onclick=()=>{flipped=!flipped;render()};
 document.getElementById('undoBtn').onclick=()=>{if(!history.length)return;restore(history.pop());clearResult();document.getElementById('score').textContent=moves.length;render()};
 document.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='n'){e.preventDefault();newGame()}});
 render();
+
+// --- Tactical trainer layer ---
+const puzzles=[{
+  theme:'Mate in one',meta:'Find the forcing move',side:'w',
+  position:[
+    [null,null,null,null,null,null,null,'♚'],
+    [null,null,null,null,null,null,'♟',null],
+    [null,null,null,null,null,null,'♔',null],
+    [null,null,null,null,null,'♕',null,null],
+    [null,null,null,null,null,null,null,null],
+    [null,null,null,null,null,null,null,null],
+    [null,null,null,null,null,null,null,null],
+    [null,null,null,null,null,null,null,null]
+  ],
+  solution:[[3,5,1,5]]
+}];
+let puzzleIndex=0,puzzleActive=true,puzzleSolved=false,correctMoves=0;
+function loadPuzzle(){
+  const p=puzzles[puzzleIndex%puzzles.length];board=structuredClone(p.position);turn=p.side;selected=null;moves=[];history=[];gameOver=false;
+  rights={wK:false,wQ:false,bK:false,bQ:false};enPassant=null;halfmove=0;puzzleSolved=false;puzzleActive=true;
+  document.getElementById('puzzleTheme').textContent=p.theme;document.getElementById('puzzleMeta').textContent=p.meta;
+  document.getElementById('moveCount').textContent='0 / '+p.solution.length;
+  document.getElementById('feedback').hidden=true;document.getElementById('sessionStatus').textContent='Puzzle mode';
+  document.getElementById('score').textContent=correctMoves;clearResult();render();
+}
+function showFeedback(title,text,good){
+  const f=document.getElementById('feedback');f.hidden=false;f.className='feedback '+(good?'good':'bad');
+  document.getElementById('feedbackTitle').textContent=title;document.getElementById('feedbackText').textContent=text;
+}
+function puzzleMoveMatches(fr,fc,tr,tc){
+  const target=puzzles[puzzleIndex%puzzles.length].solution[0];return target&&fr===target[0]&&fc===target[1]&&tr===target[2]&&tc===target[3];
+}
+function puzzleClick(r,c){
+  if(!puzzleActive||puzzleSolved)return false;
+  if(!selected){if(board[r][c]&&color(board[r][c])===turn){selected={r,c};render()}return true}
+  if(!isLegal(selected.r,selected.c,r,c)){selected=null;render();return true}
+  const fr=selected.r,fc=selected.c;
+  if(puzzleMoveMatches(fr,fc,r,c)){
+    makeMove(fr,fc,r,c);selected=null;puzzleSolved=true;puzzleActive=false;correctMoves++;document.getElementById('score').textContent=correctMoves;
+    showFeedback('Correct — brilliant.','You found the forcing move. Try the next puzzle when ready.',true);
+    document.getElementById('turnText').textContent='Puzzle solved';
+  }else{
+    selected=null;showFeedback('Not the move.','Look again for a forcing move before committing.',false);
+  }
+  render();return true;
+}
+const originalClickSquare=clickSquare;
+clickSquare=function(r,c){if(puzzleActive){puzzleClick(r,c);return}originalClickSquare(r,c)};
+const originalNewGame=newGame;
+newGame=function(){puzzleIndex++;loadPuzzle()};
+document.getElementById('newGameBtn').onclick=newGame;
+document.getElementById('newGameTop').onclick=newGame;
+document.getElementById('undoBtn').onclick=()=>loadPuzzle();
+loadPuzzle();
