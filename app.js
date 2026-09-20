@@ -257,9 +257,9 @@ function finishPuzzle(){
 function previewMoveFen(fr,fc,tr,tc){
  const snapshot={board:structuredClone(board),turn,rights:{...rights},enPassant,moves:[...moves],halfmove,history:[...history],gameOver,selected};
  const p=board[fr][fc];
- const captured=!!board[tr][tc]||(p?.toLowerCase()==='p'&&enPassant&&tr===enPassant[0]&&tc===enPassant[1]);
+ const captured=!!board[tr][tc]||(pieceType(p)==='p'&&enPassant&&tr===enPassant[0]&&tc===enPassant[1]);
  applyRaw(fr,fc,tr,tc);
- if(captured||p.toLowerCase()==='p')halfmove=0;else halfmove++;
+ if(captured||pieceType(p)==='p')halfmove=0;else halfmove++;
  moves.push(notation(fr,fc,tr,tc,captured,p==='♔'||p==='♚'));
  turn=opposite(turn);
  const fen=boardFen();
