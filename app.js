@@ -128,9 +128,9 @@ const puzzles=[{
   theme:'Mate in one',meta:'Find the forcing move',side:'w',
   position:[
     [null,null,null,null,null,null,null,'♚'],
-    [null,null,null,null,null,null,'♟',null],
+    [null,null,null,null,null,'♕','♟',null],
     [null,null,null,null,null,null,'♔',null],
-    [null,null,null,null,null,'♕',null,null],
+    [null,null,null,null,null,null,null,null],
     [null,null,null,null,null,null,null,null],
     [null,null,null,null,null,null,null,null],
     [null,null,null,null,null,null,null,null],
