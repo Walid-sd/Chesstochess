@@ -146,6 +146,18 @@ let puzzleIndex=Number(localStorage.getItem('ct-puzzle-index')||0);
 let correctMoves=Number(localStorage.getItem('ct-correct')||0);
 let solved=Number(localStorage.getItem('ct-solved')||0);
 let puzzleActive=true,puzzleSolved=false,puzzleAttempts=0,hintsUsed=0,puzzleStep=0,puzzleCorrectSteps=0;
+let sessionAttempts=Number(localStorage.getItem('ct-session-attempts')||0);
+let sessionHints=Number(localStorage.getItem('ct-session-hints')||0);
+let sessionCorrect=Number(localStorage.getItem('ct-session-correct')||0);
+function sessionAccuracy(){const total=sessionAttempts+sessionCorrect;return total?Math.round(sessionCorrect/total*100):100}
+function updateSessionStats(){
+ document.getElementById('sessionAccuracy').textContent=sessionAccuracy()+'%';
+ document.getElementById('sessionAttempts').textContent=sessionAttempts;
+ document.getElementById('sessionHints').textContent=sessionHints;
+ localStorage.setItem('ct-session-attempts',String(sessionAttempts));
+ localStorage.setItem('ct-session-hints',String(sessionHints));
+ localStorage.setItem('ct-session-correct',String(sessionCorrect));
+}
 
 function currentPuzzle(){return puzzles[puzzleIndex%puzzles.length]}
 function persistProgress(){
@@ -175,6 +187,7 @@ function loadPuzzle(){
  document.getElementById('feedback').hidden=true;
  document.getElementById('sessionStatus').textContent='Puzzle '+((puzzleIndex%puzzles.length)+1)+' of '+puzzles.length;
  document.getElementById('score').textContent=correctMoves;
+ updateSessionStats();
  clearResult();render();
 }
 function showFeedback(title,text,good){
@@ -202,7 +215,7 @@ function applyOpponentStep(){
 }
 function finishPuzzle(){
  const p=currentPuzzle();
- puzzleSolved=true;puzzleActive=false;correctMoves++;solved++;
+ puzzleSolved=true;puzzleActive=false;correctMoves++;solved++;sessionCorrect++;
  persistProgress();
  showFeedback('Solved — '+p.theme,p.explain+' Next puzzle is waiting when you are ready.',true);
  document.getElementById('turnText').textContent='Puzzle solved';
@@ -271,7 +284,8 @@ function puzzleClick(r,c){
    else if(next.actor==='opponent')applyOpponentStep();
    else { recordTrainerMove(); showFeedback('Correct.',''+formatStepLabel()+'. Keep calculating.',true); }
  }else{
-   selected=null;puzzleAttempts++;
+   selected=null;puzzleAttempts++;sessionAttempts++;
+   updateSessionStats();
    analyzeMoveQuality(fr,fc,r,c);
  }
  render();return true;
@@ -286,7 +300,8 @@ document.getElementById('hintBtn').onclick=()=>{
  if(!puzzleActive)return;
  const item=currentPuzzle().line[puzzleStep];
  if(!item||item.actor!=='player')return;
- hintsUsed++;
+ hintsUsed++;sessionHints++;
+ updateSessionStats();
  const [fr,fc]=item.move;
  const piece=board[fr]?.[fc];
  showFeedback('Hint','Look at the '+pieceName(piece)+' on '+squareName(fr,fc)+'. Find its strongest forcing move.',false);
