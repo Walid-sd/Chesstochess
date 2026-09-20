@@ -419,7 +419,7 @@ function ensureEngine(callback){
    engineWorker.postMessage('uci');
  }catch(err){engineUi('Unavailable','Engine unavailable','Web Workers are not available in this browser.',null)}
 }
-function analyzeFen(fen,callback){
+function analyzeFen(fen,callback,depth=14){
  const side=(fen.split(' ')[1]||'w');
  ensureEngine(()=>{
    if(!engineWorker||!engineReady||engineBusy)return;
@@ -430,7 +430,7 @@ function analyzeFen(fen,callback){
    engineWorker.postMessage('stop');
    engineWorker.postMessage('ucinewgame');
    engineWorker.postMessage('position fen '+fen);
-   engineWorker.postMessage('go depth 14');
+   engineWorker.postMessage('go depth '+depth);
  });
 }
 function analyzePosition(callback){
@@ -504,7 +504,8 @@ function startComputerTurn(){
    if(Number.isInteger(fr)&&Number.isInteger(fc)&&Number.isInteger(tr)&&Number.isInteger(tc)&&isLegal(fr,fc,tr,tc)){
      makeMove(fr,fc,tr,tc);render();
    }
- });
+ },botDepth);
+ setTimeout(()=>{if(botThinking&&appMode==='play'){botThinking=false;const legal=allLegalMoves('b');if(legal.length){const m=legal[Math.floor(Math.random()*legal.length)];makeMove(m[0],m[1],m[2],m[3]);render();}}},5000);
 }
 const originalPlayClick=clickSquare;
 clickSquare=function(r,c){
@@ -523,8 +524,8 @@ function bindAppControls(){
  document.getElementById('homeNav')?.addEventListener('click',()=>setMode('home'));
  document.getElementById('trainNav')?.addEventListener('click',()=>setMode('training'));
  document.getElementById('playNav')?.addEventListener('click',()=>setMode('play'));
- document.getElementById('newGameTop')?.addEventListener('click',()=>appMode==='training'?loadPuzzle():startPlayMode());
- document.getElementById('newGameBtn')?.addEventListener('click',()=>appMode==='training'?nextPuzzle():startPlayMode());
+ document.getElementById('newGameTop').onclick=()=>appMode==='training'?loadPuzzle():startPlayMode();
+ document.getElementById('newGameBtn').onclick=()=>appMode==='training'?nextPuzzle():startPlayMode();
  document.querySelectorAll('#difficultyPicker button').forEach(btn=>btn.addEventListener('click',()=>{
    botDepth=Number(btn.dataset.depth)||10;
    document.querySelectorAll('#difficultyPicker button').forEach(x=>x.classList.remove('selected'));
