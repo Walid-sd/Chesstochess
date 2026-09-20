@@ -142,7 +142,7 @@ const puzzles=[
 let puzzleIndex=Number(localStorage.getItem('ct-puzzle-index')||0);
 let correctMoves=Number(localStorage.getItem('ct-correct')||0);
 let solved=Number(localStorage.getItem('ct-solved')||0);
-let puzzleActive=true,puzzleSolved=false,puzzleAttempts=0;
+let puzzleActive=true,puzzleSolved=false,puzzleAttempts=0,hintsUsed=0;
 
 function currentPuzzle(){return puzzles[puzzleIndex%puzzles.length]}
 function persistProgress(){
@@ -154,7 +154,7 @@ function loadPuzzle(){
  const p=currentPuzzle();
  board=structuredClone(p.position);turn=p.side;selected=null;moves=[];history=[];gameOver=false;
  rights={wK:false,wQ:false,bK:false,bQ:false};enPassant=null;halfmove=0;
- puzzleSolved=false;puzzleActive=true;puzzleAttempts=0;
+ puzzleSolved=false;puzzleActive=true;puzzleAttempts=0;hintsUsed=0;
  document.querySelector('.eyebrow').textContent='TACTICAL TRAINING · PUZZLE '+String((puzzleIndex%puzzles.length)+1).padStart(2,'0');
  document.getElementById('puzzleTheme').textContent=p.theme;
  document.getElementById('puzzleMeta').textContent=p.difficulty+' · Find the best move';
@@ -203,6 +203,7 @@ function nextPuzzle(){puzzleIndex=(puzzleIndex+1)%puzzles.length;persistProgress
 document.getElementById('newGameBtn').onclick=nextPuzzle;
 document.getElementById('newGameTop').onclick=nextPuzzle;
 document.getElementById('undoBtn').onclick=loadPuzzle;
+document.getElementById('hintBtn').onclick=()=>{if(!puzzleActive)return;const p=currentPuzzle(),step=moves.length,target=p.solution[step];if(!target)return;hintsUsed++;const piece=board[target[0]][target[1]];showFeedback('Hint','Look at the '+(piece==='♕'||piece==='♛'?'queen':piece==='♖'||piece==='♜'?'rook':piece==='♘'||piece==='♞'?'knight':'piece')+' on '+files[target[1]]+(8-target[0])+'. Now find its strongest forcing move.',false);};
 document.getElementById('flipBtn').onclick=()=>{flipped=!flipped;render()};
 document.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='n'){e.preventDefault();nextPuzzle()}});
 loadPuzzle();
