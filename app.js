@@ -80,6 +80,7 @@ function makeMove(fr,fc,tr,tc){
  const n=notation(fr,fc,tr,tc,captured,castle&&Math.abs(tc-fc)===2);applyRaw(fr,fc,tr,tc);
  if(captured||p.toLowerCase()==='p')halfmove=0;else halfmove++;
  moves.push(n);turn=opposite(turn);
+ updateKnowledgePanel();
  const check=inCheck(turn),available=allLegalMoves(turn).length;
  if(available===0){gameOver=true;showResult(check?(turn==='w'?'Black wins by checkmate':'White wins by checkmate'):'Draw by stalemate')}
  else if(halfmove>=100){gameOver=true;showResult('Draw by 50-move rule')}
@@ -158,6 +159,24 @@ function updateSessionStats(){
  localStorage.setItem('ct-session-hints',String(sessionHints));
  localStorage.setItem('ct-session-correct',String(sessionCorrect));
 }
+function updateKnowledgePanel(){
+ const panel=document.getElementById('knowledgeOpening');
+ const idea=document.getElementById('knowledgeIdea');
+ const type=document.getElementById('knowledgeType');
+ if(!panel||!window.ChessKnowledge)return;
+ const matches=window.ChessKnowledge.detectOpeningKnowledge(moves);
+ if(!matches.length){
+   panel.textContent='Opening not identified';
+   type.textContent='—';
+   idea.textContent='The knowledge engine is waiting for a recognizable move pattern.';
+   return;
+ }
+ const match=matches[0];
+ const entry=window.ChessKnowledge.getChessKnowledge('openings',match.id);
+ panel.textContent=match.name+(match.variant?' · '+match.variant:'');
+ type.textContent=entry?.type?.toUpperCase()||'SYSTEM';
+ idea.textContent=entry?.ideas?.slice(0,2).join(' · ')||'Recognized chess pattern.';
+}
 
 function currentPuzzle(){return puzzles[puzzleIndex%puzzles.length]}
 function persistProgress(){
@@ -188,6 +207,7 @@ function loadPuzzle(){
  document.getElementById('sessionStatus').textContent='Puzzle '+((puzzleIndex%puzzles.length)+1)+' of '+puzzles.length;
  document.getElementById('score').textContent=correctMoves;
  updateSessionStats();
+ updateKnowledgePanel();
  clearResult();render();
 }
 function showFeedback(title,text,good){
