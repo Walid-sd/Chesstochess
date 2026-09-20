@@ -128,16 +128,16 @@ const puzzles=[
  {theme:'Mate in one',difficulty:'Beginner',icon:'♛',side:'w',
   position:[[null,null,null,null,null,null,null,'♚'],[null,null,null,null,null,'♕',null,null],[null,null,null,null,null,null,'♔',null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null]],
   solution:[[3,5,1,7]],explain:'The queen slides to h7. Your king protects h7, so the black king has no escape.'},
- {theme:'Back-rank mate',difficulty:'Beginner',icon:'♜',side:'w',
-  position:[[null,null,null,null,null,null,null,'♚'],[null,null,null,null,null,null,null,'♟'],[null,null,null,null,null,null,null,'♟'],[null,null,null,null,null,null,null,'♕'],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null],['♖',null,null,null,'♔',null,null,null]],
-  solution:[[3,7,0,7]],explain:'The rook or queen can exploit the boxed-in king. Look for the final rank.'},
- {theme:'Queen mate',difficulty:'Beginner',icon:'♕',side:'w',
-  position:[[null,null,null,null,null,null,null,'♚'],[null,null,null,null,null,null,'♕',null],[null,null,null,null,null,null,'♔',null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null]],
-  solution:[[1,6,0,6]],explain:'Qg7 is protected by the king on g6 and controls the escape squares.'},
- {theme:'Smothering net',difficulty:'Intermediate',icon:'♞',side:'w',
-  position:[[null,null,null,null,null,null,null,'♚'],[null,null,null,null,null,null,'♟','♟'],[null,null,null,null,null,null,'♔',null],[null,null,null,null,null,null,null,'♘'],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null]],
-  solution:[[3,7,1,5]],explain:'The knight jumps to f7 with check, using the king and pawns to restrict the escape.'}
-];
+ {theme:'Queen net',difficulty:'Beginner',icon:'♕',side:'w',
+  position:[[null,null,null,null,null,null,null,'♚'],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,'♔',null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null]],
+  solution:[[2,6,1,6]],explain:'Qg7 is protected by the king on g6 and controls h8, f8, h7 and f7.'},
+ {theme:'Protected queen',difficulty:'Beginner',icon:'♕',side:'w',
+  position:[[null,null,null,null,null,null,null,'♚'],[null,null,null,null,null,null,null,null],[null,null,null,null,null,'♔',null,null],[null,null,null,null,null,null,'♕',null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null]],
+  solution:[[3,6,1,6]],explain:'Qg7 is protected by the king on f6. The queen seals every flight square around h8.'},
+ {theme:'Knight mating net',difficulty:'Intermediate',icon:'♞',side:'w',
+  position:[[null,null,null,null,null,null,null,'♚'],[null,null,null,null,null,null,null,'♜'],[null,null,null,null,null,null,'♔','♞'],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null]],
+  solution:[[2,7,1,5]],explain:'Nf7 checks the king. Your king covers h7, while the rook on g8 removes the final flight square.'}
+]
 
 let puzzleIndex=Number(localStorage.getItem('ct-puzzle-index')||0);
 let correctMoves=Number(localStorage.getItem('ct-correct')||0);
