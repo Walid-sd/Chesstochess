@@ -340,7 +340,7 @@ document.getElementById('hintBtn').onclick=()=>{
 };
 document.getElementById('flipBtn').onclick=()=>{flipped=!flipped;render()};
 document.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='n'){e.preventDefault();nextPuzzle()}});
-loadPuzzle();
+// Trainer is initialized only when the user selects Tactical Training.
 
 // --- Browser engine analysis ---
 let engineWorker=null,engineReady=false,engineBusy=false,engineCallback=null,enginePending=null;
@@ -437,3 +437,100 @@ function analyzePosition(callback){
  analyzeFen(boardFen(),callback);
 }
 document.getElementById('analyzeBtn').onclick=()=>analyzePosition();
+
+
+// --- App mode controller ---
+let appMode='home';
+let botDepth=10;
+let botThinking=false;
+function setMode(mode){
+ appMode=mode;
+ const home=document.getElementById('homeScreen'),hero=document.getElementById('gameHero'),workspace=document.querySelector('.workspace'),tips=document.getElementById('tips');
+ const train=document.getElementById('trainNav'),play=document.getElementById('playNav'),homeNav=document.getElementById('homeNav');
+ if(home)home.hidden=mode!=='home';
+ if(hero)hero.hidden=mode==='home';
+ if(workspace)workspace.hidden=mode==='home';
+ if(tips)tips.hidden=mode==='home';
+ document.body.classList.toggle('mode-play',mode==='play');
+ [homeNav,train,play].forEach(x=>x?.classList.remove('active'));
+ if(mode==='home')homeNav?.classList.add('active');
+ if(mode==='training')train?.classList.add('active');
+ if(mode==='play')play?.classList.add('active');
+ if(mode==='training')startTrainingMode();
+ if(mode==='play')startPlayMode();
+}
+function resetStandardPosition(){
+ board=structuredClone(start);turn='w';moves=[];history=[];selected=null;gameOver=false;
+ rights={wK:true,wQ:true,bK:true,bQ:true};enPassant=null;halfmove=0;positionHistory=[positionKey()];
+ document.getElementById('score').textContent='0';
+ clearResult();
+}
+function startPlayMode(){
+ puzzleActive=false;puzzleSolved=false;botThinking=false;
+ resetStandardPosition();
+ document.querySelector('.eyebrow').textContent='PLAY VS COMPUTER';
+ document.querySelector('.hero h1').innerHTML='Play a complete game<br><em>against the computer.</em>';
+ document.querySelector('.subtitle').textContent='Choose a robot difficulty, make your move, and let the computer respond.';
+ document.getElementById('sessionStatus').textContent='Computer game';
+ document.getElementById('puzzleTheme').textContent='Computer opponent';
+ document.getElementById('puzzleMeta').textContent='You play White · '+(botDepth===6?'Easy':botDepth===10?'Medium':'Hard');
+ document.getElementById('puzzleIcon').textContent='♟';
+ document.getElementById('moveCount').textContent='0';
+ document.getElementById('feedback').hidden=true;
+ document.getElementById('difficultyPicker').hidden=false;
+ render();
+}
+function startTrainingMode(){
+ botThinking=false;
+ document.getElementById('difficultyPicker').hidden=true;
+ document.querySelector('.eyebrow').textContent='TACTICAL TRAINING';
+ document.querySelector('.hero h1').innerHTML='Find the move<br><em>that changes everything.</em>';
+ document.querySelector('.subtitle').textContent='Calculate before you touch a piece. The trainer will tell you whether your idea survives the position.';
+ document.getElementById('sessionStatus').textContent='Training mode';
+ loadPuzzle();
+}
+function startComputerTurn(){
+ if(appMode!=='play'||turn!=='b'||gameOver||botThinking)return;
+ botThinking=true;
+ document.getElementById('turnText').textContent='Computer is thinking…';
+ const fen=boardFen();
+ analyzeFen(fen,result=>{
+   botThinking=false;
+   if(appMode!=='play'||gameOver)return;
+   const uci=result.bestmove;
+   if(!uci||uci==='(none)')return;
+   const filesMap={a:0,b:1,c:2,d:3,e:4,f:5,g:6,h:7};
+   const fc=filesMap[uci[0]],fr=8-Number(uci[1]),tc=filesMap[uci[2]],tr=8-Number(uci[3]);
+   if(Number.isInteger(fr)&&Number.isInteger(fc)&&Number.isInteger(tr)&&Number.isInteger(tc)&&isLegal(fr,fc,tr,tc)){
+     makeMove(fr,fc,tr,tc);render();
+   }
+ });
+}
+const originalPlayClick=clickSquare;
+clickSquare=function(r,c){
+ if(appMode==='play'){
+   if(botThinking||turn!=='w'||gameOver)return;
+   const before=moves.length;
+   originalPlayClick(r,c);
+   if(moves.length>before&&turn==='b'&&!gameOver)setTimeout(startComputerTurn,180);
+   return;
+ }
+ if(appMode==='training'){puzzleClick(r,c);return;}
+};
+function bindAppControls(){
+ document.getElementById('playModeBtn')?.addEventListener('click',()=>setMode('play'));
+ document.getElementById('trainModeBtn')?.addEventListener('click',()=>setMode('training'));
+ document.getElementById('homeNav')?.addEventListener('click',()=>setMode('home'));
+ document.getElementById('trainNav')?.addEventListener('click',()=>setMode('training'));
+ document.getElementById('playNav')?.addEventListener('click',()=>setMode('play'));
+ document.getElementById('newGameTop')?.addEventListener('click',()=>appMode==='training'?loadPuzzle():startPlayMode());
+ document.getElementById('newGameBtn')?.addEventListener('click',()=>appMode==='training'?nextPuzzle():startPlayMode());
+ document.querySelectorAll('#difficultyPicker button').forEach(btn=>btn.addEventListener('click',()=>{
+   botDepth=Number(btn.dataset.depth)||10;
+   document.querySelectorAll('#difficultyPicker button').forEach(x=>x.classList.remove('selected'));
+   btn.classList.add('selected');
+   if(appMode==='play')startPlayMode();
+ }));
+}
+bindAppControls();
+setMode('home');
