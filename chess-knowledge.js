@@ -97,16 +97,17 @@ function normalizeKnowledgeMove(move){
 
 function detectOpeningKnowledge(moveList){
  const moves=moveList.map(normalizeKnowledgeMove);
+ const containsInOrder=(required)=>{let at=0;for(const move of moves){if(move===required[at])at++;if(at===required.length)return true}return false};
  const found=[];
  for(const [id,opening] of Object.entries(CHESS_KNOWLEDGE.openings)){
   if(opening.signature){
    const required=opening.signature.requiredMoves||[];
-   if(required.every(move=>moves.includes(move)))found.push({id,name:opening.name,confidence:"pattern"});
+   if(required.length&&containsInOrder(required))found.push({id,name:opening.name,confidence:"sequence"});
   }
   if(opening.variants){
    for(const variant of opening.variants){
     const required=variant.signature?.requiredMoves||[];
-    if(required.every(move=>moves.includes(move)))found.push({id,name:opening.name,variant:variant.label,confidence:"pattern"});
+    if(required.length&&containsInOrder(required))found.push({id,name:opening.name,variant:variant.label,confidence:"sequence"});
    }
   }
  }
