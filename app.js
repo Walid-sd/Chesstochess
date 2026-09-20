@@ -124,55 +124,85 @@ document.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key.toLower
 render();
 
 // --- Tactical trainer layer ---
-const puzzles=[{
-  theme:'Mate in one',meta:'Find the forcing move',side:'w',
-  position:[
-    [null,null,null,null,null,null,null,'♚'],
-    [null,null,null,null,null,'♕','♟',null],
-    [null,null,null,null,null,null,'♔',null],
-    [null,null,null,null,null,null,null,null],
-    [null,null,null,null,null,null,null,null],
-    [null,null,null,null,null,null,null,null],
-    [null,null,null,null,null,null,null,null],
-    [null,null,null,null,null,null,null,null]
-  ],
-  solution:[[3,5,1,5]]
-}];
-let puzzleIndex=0,puzzleActive=true,puzzleSolved=false,correctMoves=0;
+const puzzles=[
+ {theme:'Mate in one',difficulty:'Beginner',icon:'♛',side:'w',
+  position:[[null,null,null,null,null,null,null,'♚'],[null,null,null,null,null,'♕',null,null],[null,null,null,null,null,null,'♔',null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null]],
+  solution:[[3,5,1,7]],explain:'The queen slides to h7. Your king protects h7, so the black king has no escape.'},
+ {theme:'Back-rank mate',difficulty:'Beginner',icon:'♜',side:'w',
+  position:[[null,null,null,null,null,null,null,'♚'],[null,null,null,null,null,null,null,'♟'],[null,null,null,null,null,null,null,'♟'],[null,null,null,null,null,null,null,'♕'],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null],['♖',null,null,null,'♔',null,null,null]],
+  solution:[[3,7,0,7]],explain:'The rook or queen can exploit the boxed-in king. Look for the final rank.'},
+ {theme:'Queen mate',difficulty:'Beginner',icon:'♕',side:'w',
+  position:[[null,null,null,null,null,null,null,'♚'],[null,null,null,null,null,null,'♕',null],[null,null,null,null,null,null,'♔',null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null]],
+  solution:[[1,6,0,6]],explain:'Qg7 is protected by the king on g6 and controls the escape squares.'},
+ {theme:'Smothering net',difficulty:'Intermediate',icon:'♞',side:'w',
+  position:[[null,null,null,null,null,null,null,'♚'],[null,null,null,null,null,null,'♟','♟'],[null,null,null,null,null,null,'♔',null],[null,null,null,null,null,null,null,'♘'],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null]],
+  solution:[[3,7,1,5]],explain:'The knight jumps to f7 with check, using the king and pawns to restrict the escape.'}
+];
+
+let puzzleIndex=Number(localStorage.getItem('ct-puzzle-index')||0);
+let correctMoves=Number(localStorage.getItem('ct-correct')||0);
+let solved=Number(localStorage.getItem('ct-solved')||0);
+let puzzleActive=true,puzzleSolved=false,puzzleAttempts=0;
+
+function currentPuzzle(){return puzzles[puzzleIndex%puzzles.length]}
+function persistProgress(){
+ localStorage.setItem('ct-puzzle-index',String(puzzleIndex));
+ localStorage.setItem('ct-correct',String(correctMoves));
+ localStorage.setItem('ct-solved',String(solved));
+}
 function loadPuzzle(){
-  const p=puzzles[puzzleIndex%puzzles.length];board=structuredClone(p.position);turn=p.side;selected=null;moves=[];history=[];gameOver=false;
-  rights={wK:false,wQ:false,bK:false,bQ:false};enPassant=null;halfmove=0;puzzleSolved=false;puzzleActive=true;
-  document.getElementById('puzzleTheme').textContent=p.theme;document.getElementById('puzzleMeta').textContent=p.meta;
-  document.getElementById('moveCount').textContent='0 / '+p.solution.length;
-  document.getElementById('feedback').hidden=true;document.getElementById('sessionStatus').textContent='Puzzle mode';
-  document.getElementById('score').textContent=correctMoves;clearResult();render();
+ const p=currentPuzzle();
+ board=structuredClone(p.position);turn=p.side;selected=null;moves=[];history=[];gameOver=false;
+ rights={wK:false,wQ:false,bK:false,bQ:false};enPassant=null;halfmove=0;
+ puzzleSolved=false;puzzleActive=true;puzzleAttempts=0;
+ document.querySelector('.eyebrow').textContent='TACTICAL TRAINING · PUZZLE '+String((puzzleIndex%puzzles.length)+1).padStart(2,'0');
+ document.getElementById('puzzleTheme').textContent=p.theme;
+ document.getElementById('puzzleMeta').textContent=p.difficulty+' · Find the best move';
+ document.getElementById('puzzleIcon').textContent=p.icon;
+ document.getElementById('moveCount').textContent='0 / '+p.solution.length;
+ document.getElementById('feedback').hidden=true;
+ document.getElementById('sessionStatus').textContent='Puzzle '+((puzzleIndex%puzzles.length)+1)+' of '+puzzles.length;
+ document.getElementById('score').textContent=correctMoves;
+ clearResult();render();
 }
 function showFeedback(title,text,good){
-  const f=document.getElementById('feedback');f.hidden=false;f.className='feedback '+(good?'good':'bad');
-  document.getElementById('feedbackTitle').textContent=title;document.getElementById('feedbackText').textContent=text;
+ const f=document.getElementById('feedback');f.hidden=false;f.className='feedback '+(good?'good':'bad');
+ document.getElementById('feedbackTitle').textContent=title;
+ document.getElementById('feedbackText').textContent=text;
 }
-function puzzleMoveMatches(fr,fc,tr,tc){
-  const target=puzzles[puzzleIndex%puzzles.length].solution[0];return target&&fr===target[0]&&fc===target[1]&&tr===target[2]&&tc===target[3];
+function matchesStep(p,step,fr,fc,tr,tc){
+ return p.solution[step]&&p.solution[step][0]===fr&&p.solution[step][1]===fc&&p.solution[step][2]===tr&&p.solution[step][3]===tc;
 }
 function puzzleClick(r,c){
-  if(!puzzleActive||puzzleSolved)return false;
-  if(!selected){if(board[r][c]&&color(board[r][c])===turn){selected={r,c};render()}return true}
-  if(!isLegal(selected.r,selected.c,r,c)){selected=null;render();return true}
-  const fr=selected.r,fc=selected.c;
-  if(puzzleMoveMatches(fr,fc,r,c)){
-    makeMove(fr,fc,r,c);selected=null;puzzleSolved=true;puzzleActive=false;correctMoves++;document.getElementById('score').textContent=correctMoves;
-    showFeedback('Correct — brilliant.','You found the forcing move. Try the next puzzle when ready.',true);
-    document.getElementById('turnText').textContent='Puzzle solved';
-  }else{
-    selected=null;showFeedback('Not the move.','Look again for a forcing move before committing.',false);
-  }
-  render();return true;
+ if(!puzzleActive||puzzleSolved)return false;
+ if(!selected){
+   if(board[r][c]&&color(board[r][c])===turn){selected={r,c};render()}
+   return true;
+ }
+ if(!isLegal(selected.r,selected.c,r,c)){selected=null;render();return true}
+ const fr=selected.r,fc=selected.c,p=currentPuzzle(),step=moves.length;
+ if(matchesStep(p,step,fr,fc,r,c)){
+   makeMove(fr,fc,r,c);selected=null;
+   if(moves.length>=p.solution.length){
+     puzzleSolved=true;puzzleActive=false;correctMoves++;solved++;
+     persistProgress();
+     showFeedback('Solved — '+p.theme,p.explain+' Next puzzle is waiting when you are ready.',true);
+     document.getElementById('turnText').textContent='Puzzle solved';
+   }else{
+     showFeedback('Correct.','Now calculate the continuation.',true);
+   }
+ }else{
+   selected=null;puzzleAttempts++;
+   showFeedback('Not the best move.','Try again. Start with checks, captures, and direct threats.',false);
+ }
+ render();return true;
 }
-const originalClickSquare=clickSquare;
-clickSquare=function(r,c){if(puzzleActive){puzzleClick(r,c);return}originalClickSquare(r,c)};
-const originalNewGame=newGame;
-newGame=function(){puzzleIndex++;loadPuzzle()};
-document.getElementById('newGameBtn').onclick=newGame;
-document.getElementById('newGameTop').onclick=newGame;
-document.getElementById('undoBtn').onclick=()=>loadPuzzle();
+const normalClickSquare=clickSquare;
+clickSquare=function(r,c){if(puzzleActive){puzzleClick(r,c);return}normalClickSquare(r,c)};
+function nextPuzzle(){puzzleIndex=(puzzleIndex+1)%puzzles.length;persistProgress();loadPuzzle()}
+document.getElementById('newGameBtn').onclick=nextPuzzle;
+document.getElementById('newGameTop').onclick=nextPuzzle;
+document.getElementById('undoBtn').onclick=loadPuzzle;
+document.getElementById('flipBtn').onclick=()=>{flipped=!flipped;render()};
+document.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='n'){e.preventDefault();nextPuzzle()}});
 loadPuzzle();
