@@ -187,13 +187,6 @@ function updateKnowledgePanel(){
    idea.textContent='The knowledge engine is waiting for a recognizable opening or tactical pattern.';
  }
 }
- const match=matches[0];
- const entry=window.ChessKnowledge.getChessKnowledge('openings',match.id);
- panel.textContent=match.name+(match.variant?' · '+match.variant:'');
- type.textContent=entry?.type?.toUpperCase()||'SYSTEM';
- idea.textContent=entry?.ideas?.slice(0,2).join(' · ')||'Recognized chess pattern.';
-}
-
 function currentPuzzle(){return puzzles[puzzleIndex%puzzles.length]}
 function persistProgress(){
  localStorage.setItem('ct-puzzle-index',String(puzzleIndex));
