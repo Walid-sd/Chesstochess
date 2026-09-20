@@ -12,7 +12,7 @@ const white=new Set('♔♕♖♗♘♙'),black=new Set('♚♛♜♝♞♟');
 
 function color(p){return white.has(p)?'w':black.has(p)?'b':null}
 function opposite(t){return t==='w'?'b':'w'}
-function cloneState(){return {board:structuredClone(board),turn,rights:{...rights},enPassant,enPassant:null,moves:[...moves],halfmove}}
+function cloneState(){return {board:structuredClone(board),turn,rights:{...rights},enPassant,moves:[...moves],halfmove}}
 function restore(s){board=structuredClone(s.board);turn=s.turn;rights={...s.rights};enPassant=s.enPassant;moves=[...s.moves];halfmove=s.halfmove;gameOver=false}
 function findKing(t){for(let r=0;r<8;r++)for(let c=0;c<8;c++)if(board[r][c]===(t==='w'?'♔':'♚'))return [r,c];return null}
 
@@ -51,7 +51,7 @@ function pseudo(r,c,includeCastle=true){
 }
 function legalMovesFor(r,c){
  const p=board[r][c],t=color(p);if(!p||t!==turn)return[];
- return pseudo(r,c).filter(([tr,tc])=>{const s={board:structuredClone(board),rights:{...rights},ep:enPassant};applyRaw(r,c,tr,tc);const ok=!inCheck(t);board=s.board;rights=s.rights;enPassant=s.ep;return ok});
+ return pseudo(r,c).filter(([tr,tc])=>{if(board[tr][tc]===(t==='w'?'♚':'♔'))return false;const s={board:structuredClone(board),rights:{...rights},ep:enPassant};applyRaw(r,c,tr,tc);const ok=!inCheck(t);board=s.board;rights=s.rights;enPassant=s.ep;return ok});
 }
 function isLegal(fr,fc,tr,tc){return legalMovesFor(fr,fc).some(([r,c])=>r===tr&&c===tc)}
 
@@ -81,14 +81,14 @@ function makeMove(fr,fc,tr,tc){
  if(captured||p.toLowerCase()==='p')halfmove=0;else halfmove++;
  moves.push(n);turn=opposite(turn);
  const check=inCheck(turn),available=allLegalMoves(turn).length;
- if(available===0){gameOver=true;showResult(check?(opposite(turn)==='w'?'White wins by checkmate':'Black wins by checkmate'):'Draw by stalemate')}
+ if(available===0){gameOver=true;showResult(check?(turn==='w'?'Black wins by checkmate':'White wins by checkmate'):'Draw by stalemate')}
  else if(halfmove>=100){gameOver=true;showResult('Draw by 50-move rule')}
  else if(isThreefold()){gameOver=true;showResult('Draw by threefold repetition')}
  document.getElementById('score').textContent=moves.length;
  return before;
 }
 function allLegalMoves(t){const old=turn;turn=t;const out=[];for(let r=0;r<8;r++)for(let c=0;c<8;c++)if(color(board[r][c])===t)for(const m of legalMovesFor(r,c))out.push([r,c,...m]);turn=old;return out}
-function isThreefold(){return false}
+function isThreefold(){return false /* repetition history will be added with position hashing */}
 function showResult(text){const turnText=document.getElementById('turnText');turnText.textContent=text;turnText.parentElement.classList.add('result')}
 function clearResult(){document.querySelector('.turn').classList.remove('result')}
 function clickSquare(r,c){
