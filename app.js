@@ -12,7 +12,8 @@ const white=new Set('♔♕♖♗♘♙'),black=new Set('♚♛♜♝♞♟');
 
 function color(p){return white.has(p)?'w':black.has(p)?'b':null}
 function opposite(t){return t==='w'?'b':'w'}
-function positionKey(){const rows=board.map(row=>row.map(p=>p||'.').join('')).join('/');const castle=(rights.wK?'K':'')+(rights.wQ?'Q':'')+(rights.bK?'k':'')+(rights.bQ?'q':'')||'-';const ep=enPassant?squareName(enPassant[0],enPassant[1]):'-';return rows+' '+turn+' '+castle+' '+ep}\nfunction cloneState(){return {board:structuredClone(board),turn,rights:{...rights},enPassant,moves:[...moves],halfmove,positionHistory:[...positionHistory]}}
+function positionKey(){const rows=board.map(row=>row.map(p=>p||'.').join('')).join('/');const castle=(rights.wK?'K':'')+(rights.wQ?'Q':'')+(rights.bK?'k':'')+(rights.bQ?'q':'')||'-';const ep=enPassant?squareName(enPassant[0],enPassant[1]):'-';return rows+' '+turn+' '+castle+' '+ep}
+function cloneState(){return {board:structuredClone(board),turn,rights:{...rights},enPassant,moves:[...moves],halfmove,positionHistory:[...positionHistory]}}
 function restore(s){board=structuredClone(s.board);turn=s.turn;rights={...s.rights};enPassant=s.enPassant;moves=[...s.moves];halfmove=s.halfmove;positionHistory=[...s.positionHistory];gameOver=false}
 function findKing(t){for(let r=0;r<8;r++)for(let c=0;c<8;c++)if(board[r][c]===(t==='w'?'♔':'♚'))return [r,c];return null}
 
