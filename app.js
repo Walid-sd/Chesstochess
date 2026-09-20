@@ -417,7 +417,7 @@ function ensureEngine(callback){
    engineWorker.postMessage('uci');
  }catch(err){engineUi('Unavailable','Engine unavailable','Web Workers are not available in this browser.',null)}
 }
-function analyzeFen(fen,callback,depth=14){
+function analyzeFen(fen,callback,timeMs=1800){
  const side=(fen.split(' ')[1]||'w');
  ensureEngine(()=>{
    if(!engineWorker||!engineReady||engineBusy)return;
@@ -428,7 +428,7 @@ function analyzeFen(fen,callback,depth=14){
    engineWorker.postMessage('stop');
    engineWorker.postMessage('ucinewgame');
    engineWorker.postMessage('position fen '+fen);
-   engineWorker.postMessage('go depth '+depth);
+   engineWorker.postMessage('go movetime '+timeMs);
  });
 }
 function analyzePosition(callback){
