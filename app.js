@@ -9,6 +9,8 @@ const start=[
  ['♙','♙','♙','♙','♙','♙','♙','♙'],['♖','♘','♗','♕','♔','♗','♘','♖']];
 let board=structuredClone(start);
 const white=new Set('♔♕♖♗♘♙'),black=new Set('♚♛♜♝♞♟');
+const pieceTypes={'♔':'k','♕':'q','♖':'r','♗':'b','♘':'n','♙':'p','♚':'k','♛':'q','♜':'r','♝':'b','♞':'n','♟':'p'};
+function pieceType(p){return pieceTypes[p]||null}
 
 function color(p){return white.has(p)?'w':black.has(p)?'b':null}
 function opposite(t){return t==='w'?'b':'w'}
@@ -31,7 +33,7 @@ function attacksSquare(r,c,by){
 function inCheck(t){const k=findKing(t);return k?attacksSquare(k[0],k[1],opposite(t)):true}
 
 function pseudo(r,c,includeCastle=true){
- const p=board[r][c],t=color(p),kind=p?.toLowerCase();if(!p)return[];
+ const p=board[r][c],t=color(p),kind=pieceType(p);if(!p)return[];
  const out=[];const add=(rr,cc)=>{if(rr<0||rr>7||cc<0||cc>7)return false;if(!board[rr][cc]){out.push([rr,cc]);return true}if(color(board[rr][cc])!==t)out.push([rr,cc]);return false};
  if(kind==='p'){
    const d=t==='w'?-1:1;if(board[r+d]?.[c]==null){out.push([r+d,c]);if((t==='w'?r===6:r===1)&&board[r+2*d]?.[c]==null)out.push([r+2*d,c])}
@@ -57,7 +59,7 @@ function legalMovesFor(r,c){
 function isLegal(fr,fc,tr,tc){return legalMovesFor(fr,fc).some(([r,c])=>r===tr&&c===tc)}
 
 function applyRaw(fr,fc,tr,tc){
- const p=board[fr][fc],kind=p.toLowerCase();
+ const p=board[fr][fc],kind=pieceType(p);
  if(kind==='p'&&enPassant&&tr===enPassant[0]&&tc===enPassant[1]&&!board[tr][tc])board[fr][tc]=null;
  if(kind==='k'&&Math.abs(tc-fc)===2){
    const rookFrom=tc>fc?7:0,rookTo=tc>fc?5:3;board[fr][rookTo]=board[fr][rookFrom];board[fr][rookFrom]=null;
@@ -77,9 +79,9 @@ function notation(fr,fc,tr,tc,captured,castle){
  return names[p]+(captured?'x':'')+files[tc]+(8-tr);
 }
 function makeMove(fr,fc,tr,tc){
- history.push(cloneState());const p=board[fr][fc],castle=p==='♔'||p==='♚';const captured=!!board[tr][tc]||(p?.toLowerCase()==='p'&&enPassant&&tr===enPassant[0]&&tc===enPassant[1]);
+ history.push(cloneState());const p=board[fr][fc],castle=p==='♔'||p==='♚';const captured=!!board[tr][tc]||(pieceType(p)==='p'&&enPassant&&tr===enPassant[0]&&tc===enPassant[1]);
  const n=notation(fr,fc,tr,tc,captured,castle&&Math.abs(tc-fc)===2);applyRaw(fr,fc,tr,tc);
- if(captured||p.toLowerCase()==='p')halfmove=0;else halfmove++;
+ if(captured||pieceType(p)==='p')halfmove=0;else halfmove++;
  moves.push(n);turn=opposite(turn);
  positionHistory.push(positionKey());
  updateKnowledgePanel();
