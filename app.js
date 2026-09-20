@@ -321,7 +321,7 @@ function puzzleClick(r,c){
  }
  render();return true;
 }
-const baseClickSquare=clickSquare;
+
 function nextPuzzle(){puzzleIndex=(puzzleIndex+1)%puzzles.length;persistProgress();loadPuzzle()}
 document.getElementById('undoBtn')?.addEventListener('click',()=>{if(appMode==='play'){if(!history.length)return;restore(history.pop());clearResult();render();return}loadPuzzle()});
 document.getElementById('hintBtn').onclick=()=>{
@@ -508,9 +508,23 @@ function startComputerTurn(){
 clickSquare=function(r,c){
  if(appMode==='play'){
    if(botThinking||turn!=='w'||gameOver)return;
-   const before=moves.length;
-   baseClickSquare(r,c);
-   if(moves.length>before&&turn==='b'&&!gameOver)setTimeout(startComputerTurn,180);
+   if(!selected){
+     if(board[r][c]&&color(board[r][c])==='w'){selected={r,c};render();}
+     return;
+   }
+   if(isLegal(selected.r,selected.c,r,c)){
+     makeMove(selected.r,selected.c,r,c);
+     selected=null;
+     render();
+     if(turn==='b'&&!gameOver)setTimeout(startComputerTurn,180);
+     return;
+   }
+   if(board[r][c]&&color(board[r][c])==='w'){
+     selected={r,c};
+   }else{
+     selected=null;
+   }
+   render();
    return;
  }
  if(appMode==='training'){puzzleClick(r,c);return;}
