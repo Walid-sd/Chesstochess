@@ -458,6 +458,8 @@ function setMode(mode){
  if(mode==='play')startPlayMode();
 }
 function resetStandardPosition(){
+ if(engineWorker){try{engineWorker.postMessage('stop')}catch(e){}}
+ engineBusy=false;engineCallback=null;enginePending=null;
  board=structuredClone(start);turn='w';moves=[];history=[];selected=null;gameOver=false;
  rights={wK:true,wQ:true,bK:true,bQ:true};enPassant=null;halfmove=0;positionHistory=[positionKey()];
  document.getElementById('score').textContent='0';
@@ -489,22 +491,47 @@ function startTrainingMode(){
  document.getElementById('sessionStatus').textContent='Training mode';
  loadPuzzle();
 }
+function makeDeterministicFallbackMove(){
+ const legal=allLegalMoves('b');
+ if(!legal.length){render();return}
+ const scored=legal.map(m=>{
+   const [fr,fc,tr,tc]=m;let score=0;
+   const target=board[tr][tc];
+   if(target)score+=({p:100,n:320,b:330,r:500,q:900,k:20000}[pieceType(target)]||0);
+   const piece=board[fr][fc];
+   const kind=pieceType(piece);
+   if(kind==='p'&&Math.abs(tr-fr)===2)score+=3;
+   if(kind==='n'||kind==='b')score+=2;
+   return {m,score};
+ }).sort((a,b)=>b.score-a.score);
+ const [fr,fc,tr,tc]=scored[0].m;
+ makeMove(fr,fc,tr,tc);render();
+}
 function startComputerTurn(){
  if(appMode!=='play'||turn!=='b'||gameOver||botThinking)return;
  botThinking=true;
  document.getElementById('turnText').textContent='Computer is thinking…';
  const fen=boardFen();
- analyzeFen(fen,result=>{
+ const playEngineMove=result=>{
    botThinking=false;
    if(appMode!=='play'||gameOver)return;
    const uci=result.bestmove;
-   if(!uci||uci==='(none)')return;
-   const filesMap={a:0,b:1,c:2,d:3,e:4,f:5,g:6,h:7};
-   const fc=filesMap[uci[0]],fr=8-Number(uci[1]),tc=filesMap[uci[2]],tr=8-Number(uci[3]);
-   if(Number.isInteger(fr)&&Number.isInteger(fc)&&Number.isInteger(tr)&&Number.isInteger(tc)&&isLegal(fr,fc,tr,tc)){
-     makeMove(fr,fc,tr,tc);render();
+   if(uci){
+     const filesMap={a:0,b:1,c:2,d:3,e:4,f:5,g:6,h:7};
+     const fc=filesMap[uci[0]],fr=8-Number(uci[1]),tc=filesMap[uci[2]],tr=8-Number(uci[3]);
+     if(Number.isInteger(fr)&&Number.isInteger(fc)&&Number.isInteger(tr)&&Number.isInteger(tc)&&isLegal(fr,fc,tr,tc)){
+       makeMove(fr,fc,tr,tc);render();return;
+     }
    }
- },botTime);
+   makeDeterministicFallbackMove();
+ };
+ analyzeFen(fen,playEngineMove,botTime);
+ setTimeout(()=>{
+   if(botThinking&&appMode==='play'){
+     engineBusy=false;engineCallback=null;botThinking=false;
+     makeDeterministicFallbackMove();
+   }
+ },Math.max(botTime+5000,7000));
 }
 clickSquare=function(r,c){
  if(appMode==='play'){
