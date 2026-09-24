@@ -1,8 +1,8 @@
 (function(){
 'use strict';
 const KEY='chesstochess.weaknesses.v1',MAX_REPORTS=20;
-const LABELS={'material-loss':'Material awareness','missed-capture':'Missed tactical captures','blunder':'Move safety','mistake':'Move precision','inaccuracy':'Positional precision','missed-fork':'Fork recognition','missed-pin':'Pin recognition','missed-check':'Forcing checks','missed-hanging-piece':'Loose-piece awareness'};
-const MOTIFS=['fork','pin','check','hanging-piece'];
+const LABELS={'material-loss':'Material awareness','missed-capture':'Missed tactical captures','blunder':'Move safety','mistake':'Move precision','inaccuracy':'Positional precision','missed-fork':'Fork recognition','missed-pin':'Pin recognition','missed-check':'Forcing checks','missed-hanging-piece':'Loose-piece awareness','missed-skewer':'Skewer recognition','missed-discovered-attack':'Discovered-attack recognition'};
+const MOTIFS=['fork','pin','check','hanging-piece','skewer','discovered-attack'];
 function fresh(){return{schemaVersion:1,reports:[],updatedAt:null}}
 function read(){try{const x=JSON.parse(localStorage.getItem(KEY));return x?.schemaVersion===1?x:fresh()}catch(_){return fresh()}}
 let state=read();
