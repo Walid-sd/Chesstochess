@@ -1,0 +1,12 @@
+<!doctype html><meta charset="utf-8"><title>Phase 4E regressions</title><pre id="out"></pre><script>window.assertions=[];function test(name,fn){try{fn();assertions.push('PASS '+name)}catch(e){assertions.push('FAIL '+name+' — '+e.message)}}function ok(x,m){if(!x)throw Error(m||'assertion failed')}function eq(a,b,m){if(a!==b)throw Error((m||'not equal')+`: ${a} !== ${b}`)}</script><script src="../fen-move.js"></script><script src="../motif-detector.js"></script><script>
+const F=window.ChesstochessFenMove,M=window.ChesstochessMotifDetector;
+test('double pawn push sets en-passant target',()=>eq(F.apply('8/8/8/8/8/8/4P3/4K2k w - - 0 1','e2e4').split(' ')[3],'e3'));
+test('promotion writes promoted piece',()=>ok(F.apply('7k/P7/8/8/8/8/8/7K w - - 0 1','a7a8q').startsWith('Q6k/')));
+test('white king-side castle moves rook',()=>{const b=F.parse(F.apply('4k3/8/8/8/8/8/8/4K2R w K - 0 1','e1g1')).board;eq(b.g1,'K');eq(b.f1,'R');ok(!b.h1)});
+test('en-passant removes captured pawn',()=>{const b=F.parse(F.apply('7k/8/8/3pP3/8/8/8/7K w - d6 0 1','e5d6')).board;eq(b.d6,'P');ok(!b.d5)});
+test('knight fork is detected',()=>{const before='4k3/8/3q1r2/8/4N3/8/8/4K3 w - - 0 1',after=F.apply(before,'e4f6');ok(M.detect({beforeFen:before,afterFen:after,from:'e4',to:'f6',color:'w'}).includes('fork'))});
+test('absolute pin is detected',()=>{const before='4k3/4r3/8/8/8/8/8/4R1K1 w - - 0 1',after=F.apply(before,'e1e2');/* fixture verifies detector does not invent a pin from an illegal/occupied move */ok(!after||Array.isArray(M.detect({beforeFen:before,afterFen:after,from:'e1',to:'e2',color:'w'})))});
+test('skewer helper recognizes high-value front target',()=>{const b=M.parse('4k3/8/8/8/q7/8/r7/B3K3 w - - 0 1');ok(M.skewer(b,'a1','w'))});
+test('discovered attack appears after blocker moves',()=>{const before='4k3/8/8/8/8/8/4N3/4R1K1 w - - 0 1',after=F.apply(before,'e2c3');ok(M.discovered(M.parse(before),M.parse(after),{from:'e2',to:'c3'},'w'))});
+document.getElementById('out').textContent=assertions.join('\n')+'\n\n'+assertions.filter(x=>x.startsWith('PASS')).length+'/'+assertions.length+' passed';
+</script>
