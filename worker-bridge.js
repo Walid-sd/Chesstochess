@@ -2,25 +2,18 @@
 'use strict';
 const NativeWorker=window.Worker;
 if(typeof NativeWorker!=='function')return;
-function isRemoteStockfish(url){try{const u=new URL(String(url),location.href);return u.origin!==location.origin&&/cdn\.jsdelivr\.net$/i.test(u.hostname)&&/stockfish/i.test(u.pathname)}catch(_){return false}}
+const LOCAL_ENGINE='/engine/stockfish.js';
+function isStockfish(url){try{return /stockfish/i.test(new URL(String(url),location.href).pathname)}catch(_){return false}}
 function BridgedWorker(url,options){
- if(!isRemoteStockfish(url))return new NativeWorker(url,options);
- const absolute=new URL(String(url),location.href).href;
- const base=absolute.slice(0,absolute.lastIndexOf('/')+1);
- // Stockfish 16 single-threaded is a JS + WASM pair. Because the JS is
- // imported from a blob worker, Emscripten would otherwise try to resolve
- // its companion WASM relative to blob:, which never succeeds. Give the
- // module an explicit CDN asset resolver before importing the engine.
- const bootstrap=`self.Module=self.Module||{};self.Module.locateFile=function(path){return ${JSON.stringify(base)}+path};try{importScripts(${JSON.stringify(absolute)})}catch(error){setTimeout(function(){throw error},0)}`;
- const blobUrl=URL.createObjectURL(new Blob([bootstrap],{type:'text/javascript'}));
- const worker=new NativeWorker(blobUrl,options);
- const revoke=()=>URL.revokeObjectURL(blobUrl);
- worker.addEventListener('error',revoke,{once:true});
- setTimeout(revoke,30000);
- return worker;
+ if(!isStockfish(url))return new NativeWorker(url,options);
+ // Production analysis must not depend on a third-party worker/CDN at runtime.
+ // Netlify's build step vendors the lite single-thread Stockfish JS + WASM pair
+ // under /engine, so both assets are same-origin and the worker can resolve its
+ // companion WASM naturally beside the JS entry point.
+ return new NativeWorker(LOCAL_ENGINE,options);
 }
 BridgedWorker.prototype=NativeWorker.prototype;
 Object.setPrototypeOf(BridgedWorker,NativeWorker);
 window.Worker=BridgedWorker;
-window.ChesstochessWorkerBridge={native:NativeWorker,isRemoteStockfish};
+window.ChesstochessWorkerBridge={native:NativeWorker,isStockfish,localEngine:LOCAL_ENGINE};
 })();
