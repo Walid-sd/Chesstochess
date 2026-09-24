@@ -16,3 +16,6 @@ const feedback=document.getElementById('feedback');if(feedback)new MutationObser
 document.addEventListener('chesstochess:puzzle-loaded',e=>{const p=e.detail.puzzle;count.textContent=e.detail.poolSize+' puzzle'+(e.detail.poolSize===1?'':'s')+' · '+p.motifs.map(x=>x.replace(/-/g,' ')).join(', ')});
 renderSession();
 })();
+
+// Phase 3 analysis is kept in its own module so the trainer and play runtime remain independently reversible.
+(()=>{if(document.querySelector('script[data-analysis-foundation]'))return;const s=document.createElement('script');s.src='analysis-foundation.js';s.dataset.analysisFoundation='true';document.body.appendChild(s)})();
