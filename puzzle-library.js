@@ -2,34 +2,67 @@
   'use strict';
 
   const EMPTY = null;
+  const E=EMPTY;
   const library = [
     {
       id:'mate-one', theme:'Mate in one', difficulty:'Beginner', icon:'♛', side:'w', rating:800,
       motifs:['mate','forcing-move'], concept:'Force mate', source:'Chesstochess curated', version:1,
-      position:[[EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,'♚'],[EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,'♕',EMPTY,EMPTY],[EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,'♔',EMPTY],[EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY],[EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY],[EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY],[EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY],[EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY]],
-      line:[{actor:'player',move:[1,5,1,7]}],
-      explain:'Qh7 is mate. Your king protects h7, so the black king has no escape.'
+      position:[[E,E,E,E,E,E,E,'♚'],[E,E,E,E,E,'♕',E,E],[E,E,E,E,E,E,'♔',E],[E,E,E,E,E,E,E,E],[E,E,E,E,E,E,E,E],[E,E,E,E,E,E,E,E],[E,E,E,E,E,E,E,E],[E,E,E,E,E,E,E,E]],
+      line:[{actor:'player',move:[1,5,1,7]}], explain:'Qh7 is mate. Your king protects h7, so the black king has no escape.'
     },
     {
       id:'queen-net', theme:'Queen net', difficulty:'Beginner', icon:'♕', side:'w', rating:850,
       motifs:['king-restriction','queen'], concept:'King restriction', source:'Chesstochess curated', version:1,
-      position:[[EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,'♚'],[EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY],[EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,'♔',EMPTY],[EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,'♕',EMPTY],[EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY],[EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY],[EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY],[EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY]],
-      line:[{actor:'player',move:[3,6,1,6]}],
-      explain:'Qg7 is protected by the king on g6 and controls every escape square around h8.'
+      position:[[E,E,E,E,E,E,E,'♚'],[E,E,E,E,E,E,E,E],[E,E,E,E,E,E,'♔',E],[E,E,E,E,E,E,'♕',E],[E,E,E,E,E,E,E,E],[E,E,E,E,E,E,E,E],[E,E,E,E,E,E,E,E],[E,E,E,E,E,E,E,E]],
+      line:[{actor:'player',move:[3,6,1,6]}], explain:'Qg7 is protected by the king on g6 and controls every escape square around h8.'
     },
     {
       id:'protected-queen', theme:'Protected queen', difficulty:'Beginner', icon:'♕', side:'w', rating:900,
       motifs:['protected-piece','king-restriction'], concept:'Protected piece', source:'Chesstochess curated', version:1,
-      position:[[EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,'♚'],[EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY],[EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,'♔',EMPTY,EMPTY],[EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,'♕',EMPTY],[EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY],[EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY],[EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY],[EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY]],
-      line:[{actor:'player',move:[3,6,1,6]}],
-      explain:'Qg7 is protected by the king on f6 and seals the king on h8.'
+      position:[[E,E,E,E,E,E,E,'♚'],[E,E,E,E,E,E,E,E],[E,E,E,E,E,'♔',E,E],[E,E,E,E,E,E,'♕',E],[E,E,E,E,E,E,E,E],[E,E,E,E,E,E,E,E],[E,E,E,E,E,E,E,E],[E,E,E,E,E,E,E,E]],
+      line:[{actor:'player',move:[3,6,1,6]}], explain:'Qg7 is protected by the king on f6 and seals the king on h8.'
     },
     {
       id:'knight-sequence', theme:'Knight check sequence', difficulty:'Intermediate', icon:'♞', side:'w', rating:1100,
       motifs:['knight','forcing-sequence','check'], concept:'Forcing sequence', source:'Chesstochess curated', version:1,
-      position:[[EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,'♚'],[EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,'♜'],[EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,'♔','♘'],[EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY],[EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY],[EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY],[EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY],[EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY]],
-      line:[{actor:'player',move:[2,7,1,5]},{actor:'opponent',move:[0,7,0,6]},{actor:'player',move:[1,5,2,7]}],
-      explain:'Nf7+ forces the king away from h8. After ...Kg8, Nh6+ continues the checking sequence.'
+      position:[[E,E,E,E,E,E,E,'♚'],[E,E,E,E,E,E,E,'♜'],[E,E,E,E,E,E,'♔','♘'],[E,E,E,E,E,E,E,E],[E,E,E,E,E,E,E,E],[E,E,E,E,E,E,E,E],[E,E,E,E,E,E,E,E],[E,E,E,E,E,E,E,E]],
+      line:[{actor:'player',move:[2,7,1,5]},{actor:'opponent',move:[0,7,0,6]},{actor:'player',move:[1,5,2,7]}], explain:'Nf7+ forces the king away from h8. After ...Kg8, Nh6+ continues the checking sequence.'
+    },
+    {
+      id:'knight-fork-c7', theme:'Royal fork', difficulty:'Beginner', icon:'♞', side:'w', rating:900,
+      motifs:['fork','knight','check'], concept:'Fork king and rook', source:'Chesstochess curated', version:1,
+      position:[['♜',E,E,E,'♚',E,E,E],[E,E,E,E,E,E,E,E],[E,E,E,E,E,E,E,E],[E,'♘',E,E,E,E,E,E],[E,E,E,E,E,E,E,E],[E,E,E,E,E,E,E,E],[E,E,E,E,E,E,E,E],[E,E,E,E,E,E,E,'♔']],
+      line:[{actor:'player',move:[3,1,1,2]}], explain:'Nc7+ checks the king on e8 while also attacking the rook on a8. One knight move creates two threats.'
+    },
+    {
+      id:'bishop-pin-b5', theme:'Absolute pin', difficulty:'Beginner', icon:'♗', side:'w', rating:850,
+      motifs:['pin','bishop'], concept:'Pin a defender to the king', source:'Chesstochess curated', version:1,
+      position:[[E,E,E,E,'♚',E,E,E],[E,E,E,E,E,E,E,E],[E,E,'♞',E,E,E,E,E],[E,E,E,E,E,E,E,E],[E,E,E,E,E,E,E,E],[E,E,E,E,E,E,E,E],[E,E,E,E,E,E,E,E],[E,E,E,E,E,'♗',E,'♔']],
+      line:[{actor:'player',move:[7,5,3,1]}], explain:'Bb5 pins the knight on c6 to the king on e8. Moving the knight would expose its king to the bishop.'
+    },
+    {
+      id:'hanging-queen-a7', theme:'Hanging queen', difficulty:'Beginner', icon:'♖', side:'w', rating:700,
+      motifs:['hanging-piece','capture','material'], concept:'Take undefended material', source:'Chesstochess curated', version:1,
+      position:[[E,E,E,E,E,E,E,'♚'],['♛',E,E,E,E,E,E,E],[E,E,E,E,E,E,E,E],[E,E,E,E,E,E,E,E],[E,E,E,E,E,E,E,E],[E,E,E,E,E,E,E,E],[E,E,E,E,E,E,E,E],['♖',E,E,E,E,E,E,'♔']],
+      line:[{actor:'player',move:[7,0,1,0]}], explain:'Rxa7 wins the hanging queen immediately. Before searching for combinations, always scan for undefended material.'
+    },
+    {
+      id:'discovered-check-e-file', theme:'Discovered check', difficulty:'Intermediate', icon:'♗', side:'w', rating:1050,
+      motifs:['discovered-attack','check','rook'], concept:'Uncover a line attack', source:'Chesstochess curated', version:1,
+      position:[[E,E,E,E,'♚',E,E,E],[E,E,E,E,E,E,E,E],[E,E,E,E,E,E,E,E],[E,E,E,E,E,E,E,E],[E,E,E,E,E,E,E,E],[E,E,E,E,E,E,E,E],[E,E,E,E,'♗',E,E,E],[E,E,E,E,'♖',E,E,'♔']],
+      line:[{actor:'player',move:[6,4,3,1]}], explain:'Bb5 uncovers the rook on e1, creating a discovered check along the e-file while developing the bishop with tempo.'
+    },
+    {
+      id:'rook-back-rank', theme:'Back-rank mate', difficulty:'Intermediate', icon:'♖', side:'w', rating:1000,
+      motifs:['mate','back-rank','rook'], concept:'Exploit a boxed-in king', source:'Chesstochess curated', version:1,
+      position:[[E,E,E,E,E,E,E,'♚'],[E,E,E,E,E,E,'♟','♟'],[E,E,E,E,E,E,'♔',E],[E,E,E,E,E,E,E,E],[E,E,E,E,E,E,E,E],[E,E,E,E,E,E,E,E],[E,E,E,E,E,E,E,E],['♖',E,E,E,E,E,E,E]],
+      line:[{actor:'player',move:[7,0,0,0]}], explain:'Ra8 is mate: the rook controls the eighth rank while the black pawns take away the king’s escape squares.'
+    },
+    {
+      id:'rook-skewer-file', theme:'King and queen skewer', difficulty:'Intermediate', icon:'♖', side:'w', rating:1150,
+      motifs:['skewer','rook','check'], concept:'Force the king away from valuable material', source:'Chesstochess curated', version:1,
+      position:[[E,E,E,E,'♚',E,E,E],[E,E,E,E,E,E,E,E],[E,E,E,E,'♛',E,E,E],[E,E,E,E,E,E,E,E],[E,E,E,E,E,E,E,E],[E,E,E,E,E,E,E,E],[E,E,E,E,E,E,E,E],['♔',E,E,E,'♖',E,E,E]],
+      line:[{actor:'player',move:[7,4,0,4]}], explain:'Re8+ attacks the king first. After the king moves, the queen behind it becomes the next target: the defining geometry of a skewer.'
     }
   ];
 
