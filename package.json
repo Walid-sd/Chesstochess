@@ -1,0 +1,12 @@
+{
+  "name": "chesstochess",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Chesstochess static chess trainer",
+  "scripts": {
+    "build": "node scripts/vendor-stockfish.mjs"
+  },
+  "dependencies": {
+    "stockfish": "19.0.0"
+  }
+}
