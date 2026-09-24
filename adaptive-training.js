@@ -5,7 +5,11 @@ const MAP={
  'missed-capture':['capture','hanging-piece','material','fork'],
  'blunder':['forcing-move','check','mate','capture','fork','pin'],
  'mistake':['forcing-sequence','check','fork','pin','skewer','discovered-attack'],
- 'inaccuracy':['protected-piece','king-restriction','forcing-sequence','pin']
+ 'inaccuracy':['protected-piece','king-restriction','forcing-sequence','pin'],
+ 'missed-fork':['fork'],
+ 'missed-pin':['pin'],
+ 'missed-check':['check','forcing-move'],
+ 'missed-hanging-piece':['hanging-piece','capture','material']
 };
 function plan(){
  const focus=window.ChesstochessWeaknesses?.focus?.();
